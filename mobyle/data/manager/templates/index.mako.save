@@ -1,0 +1,112 @@
+<%inherit file="layout.mako"/>
+
+<ul class="nav nav-pills pull-right">
+  <li class="active">
+    <a href="#">Welcome ${user['name']}</a>
+  </li>
+</ul>
+
+<div class="row">
+<div class="offset1">
+<form id="fileupload class="form-inline" method="POST" enctype="multipart/form-data">
+  <fieldset>
+    <legend>Upload dataset</legend>
+    <div class="control-group">
+    <label>Project</label>
+    <select name="project">
+    % for project in user['projects']:
+        <option>${project}</option>
+    % endfor
+    </select>
+    </div>
+    <div class="control-group">
+    <label class="checkbox">
+    <input type="checkbox" name="uncompress">Uncompress
+    </label>
+    <span class="help-block">In the case of an archive (zip, tar.gz, bz2), uncompress it</span>
+    </div>
+    <div class="control-group">
+    <label class="checkbox">
+    <input type="checkbox" name="group">Group dataset
+    </label>
+    <span class="help-block">If data is uncompressed, group the dataset as a single data. If not grouped, all files will be declared as individual data element</span>
+    </div>
+
+        <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
+        <div class="row fileupload-buttonbar">
+            <div class="span7">
+                <!-- The fileinput-button span is used to style the file input field as button -->
+                <span class="btn btn-success fileinput-button">
+                    <i class="icon-plus icon-white"></i>
+                    <span>Add files...</span>
+                    <input type="file" name="files[]" multiple>
+                </span>
+                <button type="submit" class="btn btn-primary start">
+                    <i class="icon-upload icon-white"></i>
+                    <span>Start upload</span>
+                </button>
+                <button type="reset" class="btn btn-warning cancel">
+                    <i class="icon-ban-circle icon-white"></i>
+                    <span>Cancel upload</span>
+                </button>
+                <button type="button" class="btn btn-danger delete">
+                    <i class="icon-trash icon-white"></i>
+                    <span>Delete</span>
+                </button>
+                <input type="checkbox" class="toggle">
+            </div>
+            <!-- The global progress information -->
+            <div class="span5 fileupload-progress fade">
+                <!-- The global progress bar -->
+                <div class="progress progress-success progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+                    <div class="bar" style="width:0%;"></div>
+                </div>
+                <!-- The extended global progress information -->
+                <div class="progress-extended">&nbsp;</div>
+            </div>
+        </div>
+
+        <!-- The loading indicator is shown during file processing -->
+        <div class="fileupload-loading"></div>
+        <br>
+        <!-- The table listing the files available for upload/download -->
+        <table role="presentation" class="table table-striped"><tbody class="files" data-toggle="modal-gallery" data-target="#modal-gallery"></tbody></table>
+
+
+
+    <button type="submit" class="btn">Submit</button>
+  </fieldset>
+</form>
+</div>
+</div>
+
+<div class="row">
+<div id="progress">
+    <div class="bar" style="width: 0%;"></div>
+</div>
+<script>
+$(function () {
+    $('#fileupload').fileupload({
+        dataType: 'json',
+        add: function (e, data) {
+            data.context = $('<button/>').text('Upload')
+                .appendTo(document.body)
+                .click(function () {
+                    $(this).replaceWith($('<p/>').text('Uploading...'));
+                    data.submit();
+                });
+        },
+        done: function (e, data) {
+            data.context.text('Upload finished.');
+        },
+        progressall: function (e, data) {
+            var progress = parseInt(data.loaded / data.total * 100, 10);
+            $('#progress .bar').css(
+                'width',
+                progress + '%'
+            );
+        }
+    });
+});
+</script>
+</div>
