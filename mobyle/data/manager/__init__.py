@@ -41,6 +41,7 @@ def main(global_config, **settings):
     config.add_route('upload_data','/data')
 
     config.add_route('login', '/login')
+    config.add_route('logout','/logout')
     config.add_route('my','/my')
 
 

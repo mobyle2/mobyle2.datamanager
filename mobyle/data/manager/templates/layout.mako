@@ -45,7 +45,7 @@
 <ul class="nav nav-pills pull-right">
   <li class="active">
     % if user and user['last_name']:
-    <a href="#">Welcome ${user['first_name']} ${user['last_name']}</a>
+    <a href="#">Welcome ${user['first_name']} ${user['last_name']} <i id="logout" class="icon-remove-sign"></i></a>
     % else:
     <form id="apiform" action="/login" class="form form-inline"><label for="key">API KEY</label><input name="apikey" id="apikey" value=""/><button id="login" class="btn">Login</button></form>
     % endif
@@ -67,6 +67,9 @@
 
   <script>
   $(document).ready(function() {
+      $("#logout").click(function() {
+          window.location="/logout";
+      });
   });
   </script>
 

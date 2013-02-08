@@ -28,6 +28,13 @@ def my(request):
         user = mobyle.common.session.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
     return { 'user' : user}
 
+@view_config(route_name='logout', renderer='mobyle.data.manager:templates/index.mako')
+def logout(request):
+    httpsession = request.session
+    del httpsession['_id']
+    user = { 'last_name' : None, 'first_name' : None, 'apikey' : None, 'projects' : [] }
+    return { 'user' : user }
+
 @view_config(route_name='login', renderer='mobyle.data.manager:templates/index.mako')
 def login(request):
     user = { 'last_name' : None, 'first_name' : None, 'apikey' : None, 'projects' : [] }
