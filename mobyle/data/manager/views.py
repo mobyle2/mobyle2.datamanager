@@ -13,6 +13,8 @@ import re
 import logging
 import os
 
+import mobyle.common
+
 from pyramid.httpexceptions import HTTPFound
 
 @view_config(route_name='my', renderer='mobyle.data.manager:templates/my.mako')
@@ -21,7 +23,18 @@ def my(request):
 
 @view_config(route_name='login', renderer='mobyle.data.manager:templates/index.mako')
 def login(request):
-    user = { "name" : "osallou" , "projects" : [ 'project1', 'project2' ], "apikey" : "1234" }
+    from mobyle.common import session
+    user = { 'last_name' : None, 'first_name' : None, 'apikey' : None, 'projects' : [] }
+    try:
+        logging.error("key : "+request.params.getone("apikey"))
+        user = mobyle.common.session.User.find_one({'apikey' : request.params.getone("apikey")  })
+        projects = []
+        user_projects = mobyle.common.session.Project.find({ "users" : { "user"  : user["_id"] }})
+        for up in user_projects:
+            projects.append(up["name"])
+        user['projects'] = projects
+    except Exception as e:
+        logging.error("error with api key: "+str(e))
     return { 'user' : user }
 
 
@@ -29,7 +42,7 @@ def login(request):
 def my_view(request):
     #user = { "name" : "osallou" , "projects" : [ 'project1', 'project2' ] }
     #return { 'user' : user }
-    return { 'user' : { "name" : "", "projects" : [], "apikey" : "" } }
+    return { 'user' : { "first_name" : "", "last_name" : "", "projects" : [], "apikey" : "" } }
 
 
 @view_config(route_name='upload_data', renderer='json')

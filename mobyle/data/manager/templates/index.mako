@@ -6,7 +6,7 @@
     </blockquote>
     <br>
 
-% if not user['name']:
+% if not user['last_name']:
     <blockquote>
         <h3>Please login first using your API key.</h3><br>
     </blockquote>
