@@ -31,11 +31,12 @@ mobyle.common.connection.init_mongo(config.get("app:main","db_uri"))
 
 import mobyle.common
 from mobyle.common.users import User
+from mobyle.common.project import Project
 
 # Create root user
 if mobyle.common.session.User.find({ 'first_name' : 'John' }).count() == 0:
     pwd = sha1("%s"%randint(1,1e99)).hexdigest()
-    Config.logger().warn('root user created with password: '+ pwd )
+    Config.logger().warn('User created with password: '+ pwd )
     user = mobyle.common.session.User()
     user['first_name'] = 'John'
     user['last_name'] = 'Wayne'
@@ -47,6 +48,11 @@ if mobyle.common.session.User.find({ 'first_name' : 'John' }).count() == 0:
     user['hashed_password'] = hashed
     user.save()
 
-    print "User password: "+pwd 
+    project = mobyle.common.session.Project()
+    project['name'] = 'sample'
+    project['owner'] = 'Johnny'
+    project['users'].append({ 'user' : user, 'role' : 'myrole'})
+    project.save()
+
     print "Api Key "+user['apikey']
 

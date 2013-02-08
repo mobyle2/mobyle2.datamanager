@@ -45,7 +45,8 @@ def login(request):
         else:
             user = mobyle.common.session.User.find_one({'apikey' : request.params.getone("apikey")  })
         projects = []
-        user_projects = mobyle.common.session.Project.find({ "users" : { "user"  : user["_id"] }})
+        #user_projects = mobyle.common.session.Project.find({ "users.user" : user })
+        user_projects = mobyle.common.session.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
         for up in user_projects:
             projects.append(up["name"])
         user['projects'] = projects
@@ -62,7 +63,8 @@ def my_view(request):
     if "_id" in httpsession:
         user = mobyle.common.session.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
         projects = []
-        user_projects = mobyle.common.session.Project.find({ "users" : { "user"  : user["_id"] }})
+        #user_projects = mobyle.common.session.Project.find({ "users.user" : user })
+        user_projects = mobyle.common.session.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
         for up in user_projects:
             projects.append(up["name"])
         user['projects'] = projects
@@ -73,7 +75,6 @@ def my_view(request):
 
 @view_config(route_name='upload_data', renderer='json')
 def upload_data(request):
-    logging.error('I should be connected and I should check that I own the project')
     if request.method == 'DELETE':
         file = request.params.getone('key')
         os.remove(file)
