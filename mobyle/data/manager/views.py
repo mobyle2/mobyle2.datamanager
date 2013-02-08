@@ -14,25 +14,36 @@ import logging
 import os
 
 import mobyle.common
+from mobyle.common import session
+
+from bson import ObjectId
 
 from pyramid.httpexceptions import HTTPFound
 
 @view_config(route_name='my', renderer='mobyle.data.manager:templates/my.mako')
 def my(request):
-    return {}
+    user = {}
+    httpsession = request.session
+    if "_id" in httpsession:
+        user = mobyle.common.session.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
+    return { 'user' : user}
 
 @view_config(route_name='login', renderer='mobyle.data.manager:templates/index.mako')
 def login(request):
-    from mobyle.common import session
     user = { 'last_name' : None, 'first_name' : None, 'apikey' : None, 'projects' : [] }
     try:
-        logging.error("key : "+request.params.getone("apikey"))
-        user = mobyle.common.session.User.find_one({'apikey' : request.params.getone("apikey")  })
+        httpsession = request.session
+        if "_id" in httpsession:
+            user = mobyle.common.session.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
+        else:
+            user = mobyle.common.session.User.find_one({'apikey' : request.params.getone("apikey")  })
         projects = []
         user_projects = mobyle.common.session.Project.find({ "users" : { "user"  : user["_id"] }})
         for up in user_projects:
             projects.append(up["name"])
         user['projects'] = projects
+        #headers = remember(request, user["_id"])
+        httpsession["_id"] = str(user["_id"])
     except Exception as e:
         logging.error("error with api key: "+str(e))
     return { 'user' : user }
@@ -40,8 +51,16 @@ def login(request):
 
 @view_config(route_name='main', renderer='mobyle.data.manager:templates/index.mako')
 def my_view(request):
-    #user = { "name" : "osallou" , "projects" : [ 'project1', 'project2' ] }
-    #return { 'user' : user }
+    httpsession = request.session
+    if "_id" in httpsession:
+        user = mobyle.common.session.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
+        projects = []
+        user_projects = mobyle.common.session.Project.find({ "users" : { "user"  : user["_id"] }})
+        for up in user_projects:
+            projects.append(up["name"])
+        user['projects'] = projects
+
+        return { 'user' : user }
     return { 'user' : { "first_name" : "", "last_name" : "", "projects" : [], "apikey" : "" } }
 
 
