@@ -15,6 +15,8 @@ import os
 
 import mobyle.common
 from mobyle.common import session
+import objectmanager
+from objectmanager import ObjectManager,FakeData
 
 from bson import ObjectId
 
@@ -23,15 +25,18 @@ from pyramid.httpexceptions import HTTPFound
 @view_config(route_name='my', renderer='mobyle.data.manager:templates/my.mako')
 def my(request):
     user = {}
+    fakedata = {}
     httpsession = request.session
     if "_id" in httpsession:
         user = mobyle.common.session.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
-    return { 'user' : user}
+        fakedata = mobyle.common.session.FakeData.find()
+    return { 'user' : user, 'data' : fakedata}
 
 @view_config(route_name='logout', renderer='mobyle.data.manager:templates/index.mako')
 def logout(request):
     httpsession = request.session
-    del httpsession['_id']
+    if "_id" in httpsession:
+        del httpsession['_id']
     user = { 'last_name' : None, 'first_name' : None, 'apikey' : None, 'projects' : [] }
     return { 'user' : user }
 
@@ -146,6 +151,9 @@ def write_blob(data, info, options):
      if options['group']:
        logging.error('Should group data')
 
+     mngr = ObjectManager()
+     mngr.store(info['name'],file_path)
+     os.remove(file_path)
      return file_path
 
 def handle_file_upload(request,options):
