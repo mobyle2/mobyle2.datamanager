@@ -22,6 +22,16 @@ from bson import ObjectId
 
 from pyramid.httpexceptions import HTTPFound
 
+@view_config(route_name='my.json', renderer='json')
+def my_json(request):
+    try:
+        user = mobyle.common.session.User.find_one({'apikey' : request.params.getone("apikey")  })
+        if user:
+            fakedata = mobyle.common.session.FakeData.find()
+    except Exception:
+        fakedata = {}
+    return { 'data' : fakedata}
+
 @view_config(route_name='my', renderer='mobyle.data.manager:templates/my.mako')
 def my(request):
     user = {}

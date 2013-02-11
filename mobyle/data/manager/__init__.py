@@ -43,6 +43,7 @@ def main(global_config, **settings):
     config.add_route('login', '/login')
     config.add_route('logout','/logout')
     config.add_route('my','/my')
+    config.add_route('my.json','/my.json')
 
 
     config.add_static_view('static', 'mobyle.data.manager:static', cache_max_age=3600)
