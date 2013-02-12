@@ -124,7 +124,7 @@ def upload_remote_data(request):
       options['group'] = False
 
     files = {}
-    download.delay(options['project'],options['rurl'],options['uncompress'],options['group'])
+    download.delay(options['rurl'],options)
     return { 'files' : files }
 
 @view_config(route_name='upload_data', renderer='json')
