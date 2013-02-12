@@ -12,7 +12,7 @@
     </blockquote>
 % endif
 
-    <form id="remotefileupload" action="/remotedata/" method="POST">
+    <form id="remotefileupload" action="/remotedata" method="POST">
     <legend>Remote dataset</legend>
     <div class="control-group">
     <label>Project</label>

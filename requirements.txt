@@ -3,3 +3,4 @@ pairtree
 uuid
 Celery
 celery-with-mongodb
+pyramid_celery
