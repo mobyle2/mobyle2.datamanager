@@ -39,7 +39,7 @@ def my_json(request):
                 datasets.append(data)
     except Exception:
         datasets = []
-    return json.dumps( { 'data' : datasets} , default=json_util.default)
+    return json.dumps( datasets , default=json_util.default)
 
 @view_config(route_name='my', renderer='mobyle.data.manager:templates/my.mako')
 def my(request):
@@ -80,9 +80,7 @@ def login(request):
         logging.error("error with api key: "+str(e))
     return { 'user' : user }
 
-
-@view_config(route_name='main', renderer='mobyle.data.manager:templates/index.mako')
-def my_view(request):
+def get_user(request):
     httpsession = request.session
     if "_id" in httpsession:
         user = mobyle.common.session.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
@@ -92,11 +90,14 @@ def my_view(request):
         for up in user_projects:
             projects.append(up["name"])
         user['projects'] = projects
+        return user
+    return { "first_name" : "", "last_name" : "", "projects" : [], "apikey" : "" }
 
-        return { 'user' : user }
-    return { 'user' : { "first_name" : "", "last_name" : "", "projects" : [], "apikey" : "" } }
+@view_config(route_name='main', renderer='mobyle.data.manager:templates/index.mako')
+def my_view(request):
+    return { 'user' : get_user(request) }
 
-@view_config(route_name='upload_remote_data', renderer='json')
+@view_config(route_name='upload_remote_data', renderer='mobyle.data.manager:templates/index.mako')
 def upload_remote_data(request):
     if request.method == 'DELETE':
         file = request.params.getone('key')
@@ -130,7 +131,8 @@ def upload_remote_data(request):
 
     files = {}
     download.delay(options['rurl'],options)
-    return { 'files' : files }
+    request.session.flash('File download request in progress')
+    return { 'user' : get_user(request) }
 
 @view_config(route_name='upload_data', renderer='json')
 def upload_data(request):

@@ -32,14 +32,6 @@
 </head>
 
 <body>
-  % if request.session.peek_flash():
-  <div id="flash">
-    <% flash = request.session.pop_flash() %>
-	% for message in flash:
-	${message}<br>
-	% endfor
-  </div>
-  % endif
 
  <div id="page">
 <ul class="nav nav-pills pull-right">
@@ -58,6 +50,15 @@
         <h1>Mobyle data manager</h1>
     </div>
 </div>
+  % if request.session.peek_flash():
+  <div id="flash">
+    <% flash = request.session.pop_flash() %>
+        % for message in flash:
+        ${message}<br>
+        % endfor
+  </div>
+  % endif
+
 <ul class="offset1 nav nav-tabs"><li><a href="/" ><h2>Add datasets</h2></a></li><li><a href="/my" ><h2>Manage datasets</h2></a></li></ul>
 
     ${next.body()}
