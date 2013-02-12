@@ -15,6 +15,8 @@ import os
 
 import tempfile
 
+from bson import json_util
+
 import mobyle.common
 from mobyle.common import session
 import objectmanager
@@ -29,12 +31,15 @@ from background import download
 @view_config(route_name='my.json', renderer='json')
 def my_json(request):
     try:
+        datasets = []
         user = mobyle.common.session.User.find_one({'apikey' : request.params.getone("apikey")  })
         if user:
             fakedata = mobyle.common.session.FakeData.find()
+            for data in fakedata:
+                datasets.append(data)
     except Exception:
-        fakedata = {}
-    return { 'data' : fakedata}
+        datasets = []
+    return json.dumps( { 'data' : datasets} , default=json_util.default)
 
 @view_config(route_name='my', renderer='mobyle.data.manager:templates/my.mako')
 def my(request):
