@@ -13,7 +13,6 @@ from hashlib import sha1
 from random import randint
 
 
-
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
@@ -39,6 +38,7 @@ def main(global_config, **settings):
     config.add_route('main', '/')
 
     config.add_route('upload_data','/data')
+    config.add_route('upload_remote_data','/remotedata')
 
     config.add_route('login', '/login')
     config.add_route('logout','/logout')

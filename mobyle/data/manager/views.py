@@ -13,6 +13,8 @@ import re
 import logging
 import os
 
+import tempfile
+
 import mobyle.common
 from mobyle.common import session
 import objectmanager
@@ -21,6 +23,8 @@ from objectmanager import ObjectManager,FakeData
 from bson import ObjectId
 
 from pyramid.httpexceptions import HTTPFound
+
+from background import download
 
 @view_config(route_name='my.json', renderer='json')
 def my_json(request):
@@ -87,6 +91,41 @@ def my_view(request):
         return { 'user' : user }
     return { 'user' : { "first_name" : "", "last_name" : "", "projects" : [], "apikey" : "" } }
 
+@view_config(route_name='upload_remote_data', renderer='json')
+def upload_remote_data(request):
+    if request.method == 'DELETE':
+        file = request.params.getone('key')
+        os.remove(file)
+        return {}
+
+    options = {}
+    try:
+      options['rurl'] = request.params.getone('rurl')
+    except Exception:
+      options['rurl'] = None
+    if options['rurl'] is None:
+        files = {}
+        return { 'files' : files }
+
+    try:
+      options['project'] = request.params.getone('project')
+    except Exception:
+      options['project'] = None
+    try:
+      if request.params.getone('uncompress'):
+        options['uncompress'] = True
+    except Exception:
+      options['uncompress'] = False
+
+    try:
+      if request.params.getone('group'):
+        options['group'] = True
+    except Exception:
+      options['group'] = False
+
+    files = {}
+    download.delay(options['project'],options['rurl'],options['uncompress'],options['group'])
+    return { 'files' : files }
 
 @view_config(route_name='upload_data', renderer='json')
 def upload_data(request):
@@ -142,18 +181,12 @@ def get_file_size(file):
 def write_blob(data, info, options):
      if not options['project']:
        return None
-     upload_dir = os.path.join('/tmp/ftp/',options['project'])
-     file_path = os.path.join(upload_dir, info['name'])
+    
+     (out,file_path) = tempfile.mkstemp() 
+     #upload_dir = os.path.join(Config.config().get('app:main','upload_dir')+'/',options['project'])
+     #file_path = os.path.join(upload_dir, info['name'])
      output_file = open(file_path, 'wb')
 
-     # Finally write the data to the output file
-     #input_file = info['file']
-     #input_file.seek(0)
-     #while 1:
-     #    data = input_file.read(2<<16)
-     #    if not data:
-     #        break
-     #    output_file.write(data)
      output_file.write(data)
      output_file.close()
      if options['uncompress']:
@@ -162,7 +195,7 @@ def write_blob(data, info, options):
        logging.error('Should group data')
 
      mngr = ObjectManager()
-     mngr.store(info['name'],file_path)
+     mngr.store(info['name'],file_path,options)
      os.remove(file_path)
      return file_path
 

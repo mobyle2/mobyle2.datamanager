@@ -15,7 +15,7 @@ class FakeData(Document):
     __collection__ = 'fakedata'
     __database__ = Config.config().get('app:main','db_name')
 
-    structure = { 'uid' : basestring, 'name' : basestring, 'path' : basestring, 'status' : int, 'size' : int }
+    structure = { 'uid' : basestring, 'name' : basestring, 'path' : basestring, 'status' : int, 'size' : int, 'project' : basestring }
 
 if mobyle.common.session:
     mobyle.common.session.register([FakeData])
@@ -31,7 +31,7 @@ class ObjectManager:
             ObjectManager.storage = f.get_store(store_dir=config.get("app:main","store"), uri_base="http://")
 
 
-    def store(self,name,file):
+    def store(self,name,file,options={}):
         config = Config.config()
         uid = uuid.uuid4().hex
         obj = ObjectManager.storage.get_object(uid)
@@ -43,6 +43,8 @@ class ObjectManager:
         dataset['path'] = pairtree.id2path(uid)+"/"+uid
         dataset['status'] = 2
         dataset['size'] = os.path.getsize(config.get("app:main","store")+"/pairtree_root/"+dataset['path'])
+        if 'project' in options:
+            dataset['project'] = options['project']
         dataset.save()
 
 if __name__ == "__main__":

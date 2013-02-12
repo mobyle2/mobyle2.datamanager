@@ -1,3 +1,5 @@
 argparse
 pairtree
 uuid
+Celery
+celery-with-mongodb
