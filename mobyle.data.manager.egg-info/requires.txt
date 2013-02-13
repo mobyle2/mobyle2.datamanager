@@ -1,8 +1,0 @@
-pyramid
-pyramid_debugtoolbar
-waitress
-pyramid_beaker
-pymongo
-pyramid_mailer
-py-bcrypt
-scss
