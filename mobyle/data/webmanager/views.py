@@ -22,13 +22,12 @@ from mobyle.common import session
 import mobyle.data.manager.objectmanager
 from mobyle.data.manager.objectmanager import ObjectManager,FakeData
 
-mobyle.common.session.register([FakeData])
 
 from bson import ObjectId
 
 from pyramid.httpexceptions import HTTPFound
 
-from background import download
+from mobyle.data.manager.background import download
 
 @view_config(route_name='my.json', renderer='json')
 def my_json(request):
@@ -36,7 +35,13 @@ def my_json(request):
         datasets = []
         user = mobyle.common.session.User.find_one({'apikey' : request.params.getone("apikey")  })
         if user:
-            fakedata = mobyle.common.session.FakeData.find()
+            try:
+                mobyle.common.session.register([FakeData])
+                fakedata = mobyle.common.session.FakeData.find()
+            except Exception as e:
+                logging.error("Fakedata error: "+str(e))
+                return []
+
             for data in fakedata:
                 datasets.append(data)
     except Exception:
@@ -50,7 +55,12 @@ def my(request):
     httpsession = request.session
     if "_id" in httpsession:
         user = mobyle.common.session.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
-        fakedata = mobyle.common.session.FakeData.find()
+        try:
+            mobyle.common.session.register([FakeData])
+            fakedata = mobyle.common.session.FakeData.find()
+        except Exception as e:
+            logging.error("Fakedata error: "+str(e))
+            return { 'user' : user, 'data' : []}
     return { 'user' : user, 'data' : fakedata}
 
 @view_config(route_name='logout', renderer='mobyle.data.webmanager:templates/index.mako')
@@ -138,13 +148,17 @@ def upload_remote_data(request):
     request.session.flash('File download request in progress')
     return { 'user' : get_user(request) }
 
-@view_config(route_name='upload_data', renderer='json')
-def upload_data(request):
+@view_config(route_name='data', renderer='json')
+def data(request):
     if request.method == 'DELETE':
-        file = request.params.getone('key')
-        os.remove(file)
+        file = request.matchdict['uid']
+        manager = ObjectManager()
+        manager.delete(file)
         return {}
 
+
+@view_config(route_name='upload_data', renderer='json')
+def upload_data(request):
     options = {}
     try:
       options['project'] = request.params.getone('project')

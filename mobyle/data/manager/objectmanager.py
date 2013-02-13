@@ -2,6 +2,8 @@ from pairtree import *
 
 import uuid
 import pairtree
+import logging
+
 import mobyle.common
 from mobyle.common import session
 from mobyle.common.config import Config
@@ -42,6 +44,25 @@ class ObjectManager:
             config = Config.config()
             f = PairtreeStorageFactory()
             ObjectManager.storage = f.get_store(store_dir=config.get("app:main","store"), uri_base="http://")
+
+    def delete(self,uid):
+        '''
+        Delete a file from storage and database
+
+        :param uid: Name of the file (uid)
+        :type uid: str
+        '''
+        dataset = None
+        try:
+            dataset = mobyle.common.session.FakeData.find_one({ "uid" : uid})
+            if dataset is not None:
+                if dataset['path']:
+                    obj = ObjectManager.storage.get_object(uid)
+                    obj.del_file(uid)
+        except Exception as e:
+            logging.error("Error while trying to delete")
+        if dataset is not None:
+            dataset.delete()
 
     def add(self,name,options={}):
         '''

@@ -18,12 +18,29 @@
     status = '<span class="label label-important">Error</span>'
 
 %>
-<tr><td>${status |n}</td><td>
+<tr id="tr-${d['uid']}"><td>${status |n}</td><td>
 % if 'project' in d:
   ${d['project']}
 % endif
-</td><td>${d['name']}</td><td>${d['path']}</td><td>${d['size']}</td><td><button class="btn btn-primary">Delete</button></td></tr>
+</td><td>${d['name']}</td><td>${d['path']}</td><td>${d['size']}</td><td><button class="btn btn-primary delete" data-uid="${d['uid']}">Delete</button></td></tr>
 % endfor
 </table>
 </div>
 
+<script>
+$(function(){
+
+$('.delete').click(function(e) {
+        uid = $(this).attr('data-uid')
+        $.ajax({
+            type: 'delete',
+            url: '/data/'+ uid,
+            success: function() {
+               $("#tr-"+uid).remove();
+            }
+        }); 
+});
+
+});
+
+</script>
