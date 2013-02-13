@@ -1,6 +1,15 @@
+pyramid
+pyramid_debugtoolbar
+waitress
+pyramid_beaker
+pyramid_mailer
+pymongo
 argparse
 pairtree
 uuid
 Celery
 celery-with-mongodb
 pyramid_celery
+nose
+webtest
+mongokit
