@@ -5,6 +5,9 @@ from distutils.core import setup
 from distutils.command.install_egg_info import install_egg_info
 from distutils.command.build import build
 from distutils.versionpredicate import VersionPredicate
+
+from setuptools import setup, find_packages
+
 import time
 import sys
 
