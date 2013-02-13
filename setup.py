@@ -66,8 +66,9 @@ setup(name        = 'mobyle.datamanager',
       packages    = ['mobyle' , 'mobyle.data', 'mobyle.data.manager'],
       package_dir = {'': '.'},
       cmdclass= { 'build' : check_and_build },
+      entry_points = """\
       [paste.app_factory]
       main = mobyle.data.webmanager:main
-
+      """,
       )
 
