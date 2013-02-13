@@ -94,6 +94,7 @@ class ObjectManager:
         :param status: Status of the  upload/download (QUEUED,DOWNLOADING,DOWNLOADED,ERROR)
         :type status: int
         '''
+        mobyle.common.session.register([FakeData])
         dataset = mobyle.common.session.FakeData.find_one({ "_id" : ObjectId(options['id'])})
         if status == ObjectManager.DOWNLOADED:
             config = Config.config()
@@ -127,6 +128,7 @@ class ObjectManager:
         obj = ObjectManager.storage.get_object(uid)
         with open(file,'rb') as stream:
             obj.add_bytestream(uid, stream)
+        mobyle.common.session.register([FakeData])
         dataset = mobyle.common.session.FakeData()
         dataset['name'] = name
         dataset['uid'] = uid
