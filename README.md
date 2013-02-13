@@ -2,6 +2,8 @@
 
 Manage datasets
 
+This is only a prototype. Many features/security etc.. are not implemented.
+
 ## TODO
 
 In case of remote_date file://
