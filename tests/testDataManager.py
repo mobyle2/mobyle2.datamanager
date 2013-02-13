@@ -20,6 +20,7 @@ base_url = "http://localhost:6543"
 
 import mobyle.common.connection
 mobyle.common.connection.init_mongo("mongodb://localhost/")
+import mobyle.data.manager
 import mobyle.data.manager.objectmanager
 from mobyle.data.manager.objectmanager import ObjectManager,FakeData
 

@@ -19,8 +19,8 @@ from bson import json_util
 
 import mobyle.common
 from mobyle.common import session
-import objectmanager
-from objectmanager import ObjectManager,FakeData
+import mobyle.data.manager.objectmanager
+from mobyle.data.manager.objectmanager import ObjectManager,FakeData
 
 mobyle.common.session.register([FakeData])
 
@@ -43,7 +43,7 @@ def my_json(request):
         datasets = []
     return json.dumps( datasets , default=json_util.default)
 
-@view_config(route_name='my', renderer='mobyle.data.manager:templates/my.mako')
+@view_config(route_name='my', renderer='mobyle.data.webmanager:templates/my.mako')
 def my(request):
     user = {}
     fakedata = {}
@@ -53,7 +53,7 @@ def my(request):
         fakedata = mobyle.common.session.FakeData.find()
     return { 'user' : user, 'data' : fakedata}
 
-@view_config(route_name='logout', renderer='mobyle.data.manager:templates/index.mako')
+@view_config(route_name='logout', renderer='mobyle.data.webmanager:templates/index.mako')
 def logout(request):
     httpsession = request.session
     if "_id" in httpsession:
@@ -61,7 +61,7 @@ def logout(request):
     user = { 'last_name' : None, 'first_name' : None, 'apikey' : None, 'projects' : [] }
     return { 'user' : user }
 
-@view_config(route_name='login', renderer='mobyle.data.manager:templates/index.mako')
+@view_config(route_name='login', renderer='mobyle.data.webmanager:templates/index.mako')
 def login(request):
     user = { 'last_name' : None, 'first_name' : None, 'apikey' : None, 'projects' : [] }
     try:
@@ -95,11 +95,11 @@ def get_user(request):
         return user
     return { "first_name" : "", "last_name" : "", "projects" : [], "apikey" : "" }
 
-@view_config(route_name='main', renderer='mobyle.data.manager:templates/index.mako')
+@view_config(route_name='main', renderer='mobyle.data.webmanager:templates/index.mako')
 def my_view(request):
     return { 'user' : get_user(request) }
 
-@view_config(route_name='upload_remote_data', renderer='mobyle.data.manager:templates/index.mako')
+@view_config(route_name='upload_remote_data', renderer='mobyle.data.webmanager:templates/index.mako')
 def upload_remote_data(request):
     manager = ObjectManager()
 
