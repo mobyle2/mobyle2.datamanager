@@ -3,9 +3,11 @@ from pairtree import *
 import uuid
 import pairtree
 import mobyle.common
+from mobyle.common import session
 from mobyle.common.config import Config
 
 from mongokit import Document
+from bson.objectid import ObjectId
 
 class FakeData(Document):
     """
@@ -20,9 +22,20 @@ class FakeData(Document):
 if mobyle.common.session:
     mobyle.common.session.register([FakeData])
 
+
 class ObjectManager:
+    """
+    Manager for datasets.
+
+    This class store files in a pairtree filesystem and update status of objects in database.
+    """
 
     storage = None
+
+    QUEUED = 0
+    DOWNLOADING = 1
+    DOWNLOADED = 2
+    ERROR = 3
 
     def __init__(self):
         if ObjectManager.storage is None:
@@ -30,8 +43,64 @@ class ObjectManager:
             f = PairtreeStorageFactory()
             ObjectManager.storage = f.get_store(store_dir=config.get("app:main","store"), uri_base="http://")
 
+    def add(self,name,options={}):
+        '''
+        Adds a new dataset in status queued
+
+        :param name: name fo the file
+        :type name: str
+        :param options: options related to file (project,...)
+        :type options: dict
+        :return: data database id
+        '''
+        config = Config.config()
+        uid = uuid.uuid4().hex
+        dataset = mobyle.common.session.FakeData()
+        dataset['name'] = name
+        dataset['uid'] = uid
+        dataset['status'] = ObjectManager.QUEUED
+        if 'project' in options:
+            dataset['project'] = options['project']
+        dataset.save()
+        return str(dataset['_id'])
+
+    def update(self,status,options):
+        '''
+        Update the status of the object
+
+        :param id: Database id of the data
+        :type id: str
+        :param status: Status of the  upload/download (QUEUED,DOWNLOADING,DOWNLOADED,ERROR)
+        :type status: int
+        '''
+        dataset = mobyle.common.session.FakeData.find_one({ "_id" : ObjectId(options['id'])})
+        if status == ObjectManager.DOWNLOADED:
+            config = Config.config()
+            uid = dataset['uid']
+            obj = ObjectManager.storage.get_object(uid)
+            with open(options['file'],'rb') as stream:
+                obj.add_bytestream(uid, stream)
+            dataset['path'] = pairtree.id2path(uid)+"/"+uid
+            dataset['size'] = os.path.getsize(config.get("app:main","store")+"/pairtree_root/"+dataset['path'])
+            if 'project' in options:
+                dataset['project'] = options['project']
+        dataset['status'] = status
+        dataset.save()
+
+
 
     def store(self,name,file,options={}):
+        '''
+        Adds a new dataset and store input file
+
+        :param name: name fo the file
+        :type name: str
+        :param file: Path to the input file
+        :type file: str
+        :param options: options related to file (project,...)
+        :type options: dict
+        :return: data database id
+        '''
         config = Config.config()
         uid = uuid.uuid4().hex
         obj = ObjectManager.storage.get_object(uid)
@@ -41,11 +110,12 @@ class ObjectManager:
         dataset['name'] = name
         dataset['uid'] = uid
         dataset['path'] = pairtree.id2path(uid)+"/"+uid
-        dataset['status'] = 2
+        dataset['status'] = ObjectManager.DOWNLOADED
         dataset['size'] = os.path.getsize(config.get("app:main","store")+"/pairtree_root/"+dataset['path'])
         if 'project' in options:
             dataset['project'] = options['project']
         dataset.save()
+        return dataset['_id']
 
 if __name__ == "__main__":
     config = Config.config()

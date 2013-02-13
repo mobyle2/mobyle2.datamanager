@@ -22,6 +22,8 @@ from mobyle.common import session
 import objectmanager
 from objectmanager import ObjectManager,FakeData
 
+mobyle.common.session.register([FakeData])
+
 from bson import ObjectId
 
 from pyramid.httpexceptions import HTTPFound
@@ -99,19 +101,20 @@ def my_view(request):
 
 @view_config(route_name='upload_remote_data', renderer='mobyle.data.manager:templates/index.mako')
 def upload_remote_data(request):
-    if request.method == 'DELETE':
-        file = request.params.getone('key')
-        os.remove(file)
-        return {}
+    manager = ObjectManager()
 
     options = {}
     try:
       options['rurl'] = request.params.getone('rurl')
+      if options['rurl'].startswith('file:'):
+          request.session.flash('file:// access denied per configuration')
+          files = {}
+          return { 'user' : get_user(request) }
     except Exception:
       options['rurl'] = None
     if options['rurl'] is None:
         files = {}
-        return { 'files' : files }
+        return { 'user' : get_user(request) }
 
     try:
       options['project'] = request.params.getone('project')
@@ -130,6 +133,7 @@ def upload_remote_data(request):
       options['group'] = False
 
     files = {}
+    options['id'] = manager.add(options['rurl'],options)
     download.delay(options['rurl'],options)
     request.session.flash('File download request in progress')
     return { 'user' : get_user(request) }

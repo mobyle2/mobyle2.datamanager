@@ -1,5 +1,14 @@
 # Data manager
 
+Manage datasets
+
+## TODO
+
+In case of remote_date file://
+ - check if allowed in configuration
+ - only only local registered users (ldap)
+ - limit access to a list of root directories
+
 # Background tasks
 
 Background tasks are manaed with celery.
