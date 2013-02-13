@@ -49,7 +49,7 @@ class check_and_build( build ):
 require_pyt = [ 'python (>=2.7, <3.0)' ]
 require_mod = []
 
-setup(name        = 'mobyle.datamanager',
+setup(name        = 'mobyle2.datamanager',
       version     =  time.strftime("%Y-%m-%d"),
       author      = "Olivier Sallou",
       author_email = "olivier.sallou@irisa.fr",
