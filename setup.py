@@ -49,27 +49,27 @@ class check_and_build( build ):
 require_pyt = [ 'python (>=2.7, <3.0)' ]
 require_mod = []
 
-setup(name        = 'mobyle2.datamanager',
-      version     =  time.strftime("%Y-%m-%d"),
+setup(name='mobyle2.datamanager',
+      version= time.strftime("%Y-%m-%d"),
+      description  = "common libraries to Mobyle2 project to manage datasets",
+      classifiers=[
+        "Programming Language :: Python",
+        "Framework :: Pylons",
+        "Topic :: Internet :: WWW/HTTP",
+        "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+        ],
       author      = "Olivier Sallou",
       author_email = "olivier.sallou@irisa.fr",
       license      = "GPLv3" ,
       url = "https://github.com/mobyle2/mobyle2.datamanager",
-      download_url = "https://github.com/mobyle2/mobyle2.datamanager",
-      description  = "common libraries to Mobyle2 project to manage datasets",
-      classifiers = [
-                     'License :: GPLv3' ,
-                     'Operating System :: POSIX' ,
-                     'Programming Language :: Python' ,
-                     'Topic :: Bioinformatics' ,
-                    ] ,
+      keywords='mobyle data manager',
       packages    = ['mobyle' , 'mobyle.data', 'mobyle.data.manager'],
-      package_dir = {'': '.'},
       include_package_data=True,
-      cmdclass= { 'build' : check_and_build },
+      zip_safe=False,
       entry_points = """\
       [paste.app_factory]
       main = mobyle.data.webmanager:main
       """,
       )
+
 
