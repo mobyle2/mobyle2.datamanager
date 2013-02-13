@@ -65,6 +65,7 @@ setup(name        = 'mobyle2.datamanager',
                     ] ,
       packages    = ['mobyle' , 'mobyle.data', 'mobyle.data.manager'],
       package_dir = {'': '.'},
+      include_package_data=True,
       cmdclass= { 'build' : check_and_build },
       entry_points = """\
       [paste.app_factory]
