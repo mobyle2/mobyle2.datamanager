@@ -2,7 +2,15 @@
 
 Manage datasets
 
+## Install
+
+pip install -e git+https://github.com/mobyle2/mobyle2.datamanager.git#egg=mobyle2.datamanager
+
 This is only a prototype. Many features/security etc.. are not implemented.
+
+## Create fake user
+
+python  src/mobyle2.datamanager/db/fakeuser.py --config src/mobyle2.datamanager/development.ini
 
 ## TODO
 
