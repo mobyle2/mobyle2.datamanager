@@ -14,4 +14,4 @@ nose
 webtest
 mongokit
 pyftpdlib
-sendfile
+pysendfile
