@@ -8,7 +8,12 @@ from mobyle.data.manager.objectmanager import FakeData
 
 from bson import ObjectId
 
-from pyftpdlib.filesystems import _months_map
+from pyftpdlib.filesystems import _months_map,FilesystemError
+
+try:
+    from stat import filemode as _filemode  # PY 3.3
+except ImportError:
+    from tarfile import filemode as _filemode
 
 import logging
 
@@ -131,6 +136,7 @@ class MobyleFileSystem(AbstractedFS):
         mobyle.common.session.register([FakeData])
         paths = filename.split('/')
         filename = paths[1]
+        filename = filename.split('_')[0]
         fakedata = mobyle.common.session.FakeData.find_one( {'uid' : filename})
         from mobyle.common.config import Config
         config = Config().config()
@@ -182,21 +188,35 @@ class MobyleFileSystem(AbstractedFS):
                         basename = unicode(basename, 'utf8')
             else:
                 file = os.path.join(basedir, basename['uid'])
+            try:
+                from mobyle.common.config import Config
+                config = Config().config()
+                st = self.lstat(config.get("app:main","store")+"/pairtree_root/"+basename['path'])
+            except (OSError, FilesystemError):
+                if ignore_err:
+                    continue
+                raise
 
-            perms = ""  # permissions
+            perms = _filemode(st.st_mode)  # permissions
+            nlinks = st.st_nlink  # number of links to inode
+            if not nlinks:  # non-posix system, let's use a bogus value
+                nlinks = 1
+            size = st.st_size  # file size
+            mtime = timefunc(st.st_mtime)
             size = basename['size']  # file size
-            uname = ""
-            gname = ""
-            #mtime = timefunc(basename['_id'].getTimestamp())
-            from datetime import datetime
-            mtime = datetime.now()
+            uname = "mobyle"
+            gname = "mobyle"
             
             # if modification time > 6 months shows "month year"
             # else "month hh:mm";  this matches proftpd format, see:
             # http://code.google.com/p/pyftpdlib/issues/detail?id=187
-            fmtstr = "%Y %m %d %H:%M"
+            if (now - st.st_mtime) > SIX_MONTHS:
+                fmtstr = "%d  %Y"
+            else:
+                fmtstr = "%d %H:%M"
             try:
-                mtimestr = "%s" % (mtime.strftime(fmtstr))
+                mtimestr = "%s %s" % (_months_map[mtime.tm_mon],
+                                      time.strftime(fmtstr, mtime))
             except ValueError:
                 # It could be raised if last mtime happens to be too
                 # old (prior to year 1900) in which case we return
@@ -206,6 +226,9 @@ class MobyleFileSystem(AbstractedFS):
                                       time.strftime("%d %H:%M", mtime))
 
             # formatting is matched with proftpd ls output
-            line = "%s %s %-8s %-8s %8s %s %s\r\n" % (perms, basename['name'], uname, gname,
-                                                       size, mtimestr, basename['uid'])
+            #line = "%s %s %-8s %-8s %8s %s %s\r\n" % (perms, basename['name'], uname, gname,
+            #                                           size, mtimestr, basename['uid'])
+            line = "%s %3s %-8s %-8s %8s %s %s\r\n" % (perms, nlinks, uname, gname,
+                                                       size, mtimestr, basename['uid']+"_"+basename['name'])
+            logging.warn("out list: "+line)
             yield line.encode('utf8', self.cmd_channel.unicode_errors)
