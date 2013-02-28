@@ -170,7 +170,7 @@ class ObjectManager:
             dataset['project'] = options['project']
 
         if not type in options:
-            options['type'] = 
+            options['type'] = 0
 
         if options['type'] == 0:
             # Try auto-detect
