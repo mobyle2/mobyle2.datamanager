@@ -124,12 +124,18 @@ class ObjectManager:
         :return: data database id
         '''
         config = Config.config()
-        uid = uuid.uuid4().hex
+        if 'id' in options:
+            dataset = mobyle.common.session.FakeData.find_one({ '_id' : ObjectId(options['id']) })
+            uid = dataset['uid']
+        else:
+            dataset = mobyle.common.session.FakeData()
+            uid = uuid.uuid4().hex
+
         obj = ObjectManager.storage.get_object(uid)
         with open(file,'rb') as stream:
             obj.add_bytestream(uid, stream)
         mobyle.common.session.register([FakeData])
-        dataset = mobyle.common.session.FakeData()
+
         dataset['name'] = name
         dataset['uid'] = uid
         dataset['path'] = pairtree.id2path(uid)+"/"+uid

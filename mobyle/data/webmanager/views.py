@@ -107,7 +107,12 @@ def get_user(request):
 
 @view_config(route_name='main', renderer='mobyle.data.webmanager:templates/index.mako')
 def my_view(request):
-    return { 'user' : get_user(request) }
+    uid = None
+    try:
+        uid = request.params.getone('id')
+    except Exception:
+        uid = None
+    return { 'user' : get_user(request), 'uid' : uid }
 
 @view_config(route_name='upload_remote_data', renderer='mobyle.data.webmanager:templates/index.mako')
 def upload_remote_data(request):
@@ -130,6 +135,12 @@ def upload_remote_data(request):
       options['project'] = request.params.getone('project')
     except Exception:
       options['project'] = None
+
+    try:
+      options['id'] = request.params.getone('id')
+    except Exception:
+      options['id'] = None
+
     try:
       if request.params.getone('uncompress'):
         options['uncompress'] = True
@@ -143,7 +154,8 @@ def upload_remote_data(request):
       options['group'] = False
 
     files = {}
-    options['id'] = manager.add(options['rurl'],options)
+    if options['id'] is None:
+        options['id'] = manager.add(options['rurl'],options)
     download.delay(options['rurl'],options)
     request.session.flash('File download request in progress')
     return { 'user' : get_user(request) }
@@ -164,6 +176,11 @@ def upload_data(request):
       options['project'] = request.params.getone('project')
     except Exception:
       options['project'] = None
+
+    try:
+      options['id'] = request.params.getone('id')
+    except Exception:
+      options['id'] = None
     try:
       if request.params.getone('uncompress'):
         options['uncompress'] = True

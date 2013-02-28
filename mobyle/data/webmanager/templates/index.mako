@@ -23,6 +23,12 @@
     </select>
     </div>
     <input type="hidden" class="apikey" name="apikey" value="${user['apikey']}"/>
+    % if uid:
+    <div class="control-group error">
+      <label>Replacing file</label>
+      <input type="text" value="${uid}" name="id"/>
+    </div>
+    % endif
     <div class="control-group">
     <label>URL</label>
     <input type="text" name="rurl" value=""/>
@@ -72,6 +78,13 @@
     <span class="help-block">If data is uncompressed, group the dataset as a single data. If not grouped, all files will be declared as individual data element</span>
     </div>
     <input type="hidden" class="apikey" name="apikey" value="${user['apikey']}"/>
+    % if uid:
+    <div class="control-group error">
+      <label>Replacing file</label>
+      <input type="text" name="id" value="${uid}"/>
+    </div>
+    % endif
+
 
         <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
         <div class="row fileupload-buttonbar">
