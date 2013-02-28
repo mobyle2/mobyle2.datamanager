@@ -169,6 +169,9 @@ class ObjectManager:
         if 'project' in options:
             dataset['project'] = options['project']
 
+        if not type in options:
+            options['type'] = 
+
         if options['type'] == 0:
             # Try auto-detect
             detector = BioFormat()
