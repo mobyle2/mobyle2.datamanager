@@ -43,10 +43,15 @@ def main(global_config, **settings):
     config.add_route('my.json','/my.json')
     config.add_route('data','/data/{uid}')
 
-
     config.add_static_view('static', 'mobyle.data.webmanager:static', cache_max_age=3600)
     
     config.scan()
+
+
+    from  mobyle.data.manager.objectmanager import ObjectManager
+    objectmanager = ObjectManager()
+    config.add_static_view(name='download', path=objectmanager.get_storage_path())
+
 
     return config.make_wsgi_app()
 

@@ -47,6 +47,7 @@ class ObjectManager:
 
     def get_storage_path(self):
         '''Get path to the storage'''
+        config = Config.config()
         return config.get("app:main","store")+"/pairtree_root/"
 
     def delete(self,uid):
