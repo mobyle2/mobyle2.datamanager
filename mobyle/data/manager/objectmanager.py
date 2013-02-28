@@ -117,6 +117,9 @@ class ObjectManager:
             format = None
             mime = None
 
+            if not type in options:
+                options['type'] = 0
+
             if options['type'] == 0:
                 # Try auto-detect
                 detector = BioFormat()
