@@ -45,6 +45,10 @@ class ObjectManager:
             f = PairtreeStorageFactory()
             ObjectManager.storage = f.get_store(store_dir=config.get("app:main","store"), uri_base="http://")
 
+    def get_storage_path(self):
+        '''Get path to the storage'''
+        return config.get("app:main","store")+"/pairtree_root/"
+
     def delete(self,uid):
         '''
         Delete a file from storage and database
