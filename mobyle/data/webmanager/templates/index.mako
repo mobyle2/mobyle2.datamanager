@@ -30,6 +30,14 @@
     </div>
     % endif
     <div class="control-group">
+    <label>Data type</label>
+    <select name="type">
+      <option value="0">Auto-detect</option>
+      <option value="1">Fasta</option>
+    </select>
+    <span class="help-block">Type of the data</span>
+    </div>
+    <div class="control-group">
     <label>URL</label>
     <input type="text" name="rurl" value=""/>
     <span class="help-block">URL of remote element (http,ftp,cp). Must be readable as anonymous.</span>
@@ -65,6 +73,15 @@
     % endfor
     </select>
     </div>
+    <div class="control-group">
+    <label>Data type</label>
+    <select name="type">
+      <option value="0">Auto-detect</option>
+      <option value="1">Fasta</option>
+    </select>
+    <span class="help-block">Type of the data</span>
+    </div>
+
     <div class="control-group">
     <label class="checkbox">
     <input type="checkbox" name="uncompress">Uncompress

@@ -22,7 +22,6 @@ from mobyle.common import session
 import mobyle.data.manager.objectmanager
 from mobyle.data.manager.objectmanager import ObjectManager,FakeData
 
-
 from bson import ObjectId
 
 from pyramid.httpexceptions import HTTPFound
@@ -193,6 +192,10 @@ def upload_data(request):
     except Exception:
       options['group'] = False
 
+    try:
+      options['type'] = int(request.params.getone('type'))
+    except Exception:
+      options['type'] = 0
 
     files = handle_file_upload(request,options)
     return { 'files' : files }
