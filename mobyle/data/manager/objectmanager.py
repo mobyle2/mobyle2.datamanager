@@ -117,9 +117,6 @@ class ObjectManager:
             format = None
             mime = None
 
-            if not type in options:
-                options['type'] = 0
-
             if options['type'] == 0:
                 # Try auto-detect
                 detector = BioFormat()
@@ -168,9 +165,6 @@ class ObjectManager:
         dataset['size'] = os.path.getsize(self.get_storage_path()+dataset['path'])
         if 'project' in options:
             dataset['project'] = options['project']
-
-        if not type in options:
-            options['type'] = 0
 
         if options['type'] == 0:
             # Try auto-detect

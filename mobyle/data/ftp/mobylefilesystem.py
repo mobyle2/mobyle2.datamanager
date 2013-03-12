@@ -50,9 +50,11 @@ class MobyleFileSystem(AbstractedFS):
         """If path is a user id, then it is root dir"""
         import mobyle.common
         mobyle.common.session.register([FakeData])
+        elts = path.split('/')
         try:
-            user = mobyle.common.session.User.find_one({ '_id' : ObjectId(path) })
-            return True
+            user = mobyle.common.session.User.find_one({ '_id' : ObjectId(elts[0]) })
+            if len(elts) == 1:
+              return True
         except Exception:
             return False
         return False

@@ -12,6 +12,26 @@ import pymongo
 from hashlib import sha1
 from random import randint
 
+def data_include(config):
+    config.add_route('main', '/')
+
+    config.add_route('upload_data','/data')
+    config.add_route('upload_remote_data','/remotedata')
+
+    config.add_route('login', '/login')
+    config.add_route('logout','/logout')
+    config.add_route('my','/my')
+    config.add_route('my.json','/my.json')
+    config.add_route('data','/data/{uid}')
+
+    config.add_static_view('static', 'mobyle.data.webmanager:static', cache_max_age=3600)
+
+def objectmanager_include(config):
+    from  mobyle.data.manager.objectmanager import ObjectManager
+    objectmanager = ObjectManager()
+    config.add_static_view(name='download', path=objectmanager.get_storage_path())
+
+
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
@@ -31,27 +51,12 @@ def main(global_config, **settings):
     import mobyle.common.connection
     mobyle.common.connection.init_mongo(settings['db_uri'])
     #end initialization
-    
-    config.add_route('main', '/')
 
-    config.add_route('upload_data','/data')
-    config.add_route('upload_remote_data','/remotedata')
-
-    config.add_route('login', '/login')
-    config.add_route('logout','/logout')
-    config.add_route('my','/my')
-    config.add_route('my.json','/my.json')
-    config.add_route('data','/data/{uid}')
-
-    config.add_static_view('static', 'mobyle.data.webmanager:static', cache_max_age=3600)
+    config.include(data_include, route_prefix='/data-manager')    
     
     config.scan()
 
-
-    from  mobyle.data.manager.objectmanager import ObjectManager
-    objectmanager = ObjectManager()
-    config.add_static_view(name='download', path=objectmanager.get_storage_path())
-
+    config.include(objectmanager_include, route_prefix='/data-manager')
 
     return config.make_wsgi_app()
 

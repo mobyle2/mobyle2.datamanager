@@ -190,8 +190,6 @@ class BioFormat (object):
         return (None,None)
 
 
-
-
 if __name__ == "__main__":
     if squizz:
         BioFormat.register(SquizzDetector)
