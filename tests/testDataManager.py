@@ -14,7 +14,7 @@ from mobyle.common.config import Config
 
 Config("development.ini")
 
-from mobyle.common import connection
+from mobyle.common.connection import connection
 
 base_url = "http://localhost:6543"
 

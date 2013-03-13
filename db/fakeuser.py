@@ -28,7 +28,7 @@ config = Config(args.config).config()
 
 
 import mobyle.common
-from mobyle.common import connection
+from mobyle.common.connection import connection
 from mobyle.common.users import User
 from mobyle.common.project import Project
 

@@ -5,7 +5,7 @@ import tempfile
 from pyftpdlib._compat import PY3, u, unicode, property
 
 import mobyle.common
-from mobyle.common import connection
+from mobyle.common.connection import connection
 
 from mobyle.data.manager.objectmanager import FakeData, FakeProject
 

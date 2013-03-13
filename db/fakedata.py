@@ -28,7 +28,7 @@ config = Config(args.config).config()
 
 
 import mobyle.common
-from mobyle.common import connection
+from mobyle.common.connection import connection
 from mobyle.data.manager.objectmanager import FakeData,FakeProject
 
 # Create root user

@@ -18,7 +18,7 @@ import tempfile
 from bson import json_util
 
 import mobyle.common
-from mobyle.common import connection
+from mobyle.common.connection import connection
 import mobyle.data.manager.objectmanager
 from mobyle.data.manager.objectmanager import ObjectManager,FakeData
 

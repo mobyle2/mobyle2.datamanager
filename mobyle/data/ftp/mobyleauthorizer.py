@@ -1,7 +1,7 @@
 from pyftpdlib.authorizers import AuthenticationFailed
 
 import mobyle.common
-from mobyle.common import connection
+from mobyle.common.connection import connection
 
 class MobyleAuthorizer(object):
     """Basic "mobyle" authorizer class

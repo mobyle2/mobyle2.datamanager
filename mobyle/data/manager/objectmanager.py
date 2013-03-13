@@ -5,7 +5,7 @@ import pairtree
 import logging
 
 import mobyle.common
-from mobyle.common import connection
+from mobyle.common.connection import connection
 from mobyle.common.config import Config
 
 from mongokit import Document
