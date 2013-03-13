@@ -77,16 +77,19 @@ def login(request):
             user = connection.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
         else:
             user = connection.User.find_one({'apikey' : request.params.getone("apikey")  })
-        projects = []
-        #user_projects = connection.Project.find({ "users.user" : user })
-        user_projects = connection.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
-        for up in user_projects:
-            projects.append(up["name"])
-        user['projects'] = projects
-        #headers = remember(request, user["_id"])
         httpsession["_id"] = str(user["_id"])
     except Exception as e:
         logging.error("error with api key: "+str(e))
+    try:
+        projects = []
+        if "_id" in httpsession:
+            user_projects = connection.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
+            for up in user_projects:
+                projects.append(up["name"])
+            user['projects'] = projects
+    except Exception as e:
+        logging.error("error with projects: "+str(e))
+        user['projects'] = projects
     return { 'user' : user }
 
 def get_user(request):
@@ -94,10 +97,14 @@ def get_user(request):
     if "_id" in httpsession:
         user = connection.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
         projects = []
-        user_projects = connection.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
-        for up in user_projects:
-            projects.append(up["name"])
-        user['projects'] = projects
+        try:
+            user_projects = connection.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
+            for up in user_projects:
+                projects.append(up["name"])
+            user['projects'] = projects
+        except Exception as e:
+            logging.error("error with projects: "+str(e))
+            user['projects'] = projects
         return user
     return { "first_name" : "", "last_name" : "", "projects" : [], "apikey" : "" }
 
