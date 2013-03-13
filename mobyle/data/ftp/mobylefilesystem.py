@@ -4,7 +4,7 @@ import time
 import tempfile
 from pyftpdlib._compat import PY3, u, unicode, property
 
-from mobyle.data.manager.objectmanager import FakeData
+from mobyle.data.manager.objectmanager import FakeData, FakeProject
 
 from bson import ObjectId
 
@@ -22,6 +22,14 @@ class MobyleFileSystem(AbstractedFS):
 
     """
 
+    def __init__(self, root, cmd_channel):
+        """
+         - (str) root: the user "real" home directory (e.g. '/home/user')
+         - (instance) cmd_channel: the FTPHandler class instance
+        """
+        super(MobyleFileSystem, self).__init__(root, cmd_channel)
+        self._uid = root
+        self._root = u('/')
 
     def validpath(self, path):
             # validpath was used to check symlinks escaping user home
@@ -30,7 +38,12 @@ class MobyleFileSystem(AbstractedFS):
 
     def chdir(self, path):
         # No change possible for the moment
-        self._cwd = self._cwd
+        #self._cwd = path
+        if path == '/':
+            path = u(path)
+        self._cwd = u(self.fs2ftp(path))
+        logging.warn("chdir to "+self._cwd)
+       
 
     def mkdir(self, path):
         # Not possible
@@ -52,9 +65,16 @@ class MobyleFileSystem(AbstractedFS):
         mobyle.common.session.register([FakeData])
         elts = path.split('/')
         try:
-            user = mobyle.common.session.User.find_one({ '_id' : ObjectId(elts[0]) })
-            if len(elts) == 1:
+            #user = mobyle.common.session.User.find_one({ '_id' : ObjectId(elts[0]) })
+            user = mobyle.common.session.User.find_one({ '_id' : ObjectId(self._uid) })
+            # User root
+            #if len(elts) == 1:
+            if path == '/':
               return True
+            # User project
+            elif len(elts) == 2:
+              return True
+            # Next, should check if a sub dataset           
         except Exception:
             return False
         return False
@@ -63,9 +83,10 @@ class MobyleFileSystem(AbstractedFS):
         """"Return an iterator object that yields a directory listing
         in a form suitable for LIST command.
         """
-        assert isinstance(path, unicode), path
+        logging.warn("cur dir is "+self._cwd)
         logging.warn("get_list_dir: "+path)
         if self.isdir(path):
+            logging.warn("list a directory")
             listing = self.listdir(path)
             try:
                 listing.sort()
@@ -79,33 +100,47 @@ class MobyleFileSystem(AbstractedFS):
             return self.format_list(path, listing)
         # if path is a file or a symlink we return information about it
         else:
+            logging.warn("list a file: "+path)
             import mobyle.common
             mobyle.common.session.register([FakeData])
             # Should of course get fakedatas of user only
             fakedata = mobyle.common.session.FakeData.find_one({ 'uid' : path })
              
-            return self.format_list(basedir, [fakedata])
+            return self.format_list(path, [fakedata])
 
     def listdir(self, path):
         """List the content ie all fakedatas."""
 
         import mobyle.common
-        mobyle.common.session.register([FakeData])
-        # Should of course get fakedatas of user only
-        fakedata = mobyle.common.session.FakeData.find()
+        mobyle.common.session.register([FakeData,FakeProject])
         files = []
-        for data in fakedata:
-            #files.append(data['uid'])
-            if 'uid' in data:
-                files.append(data)
+        # Should of course get fakedatas/projects of user only
+        elts = path.split('/')
+        logging.warn("listdir: path= "+str(elts))
+        if path == '/':
+            # Root dir, list projects
+            projects = mobyle.common.session.FakeProject.find()
+            for project in projects:
+                files.append(project)
+        else:
+            project = elts[1].split('_')
+            #TODO fakedata should refer to project ids, not names
+            # Should chech ObjectId(project[0])
+            fakedata = mobyle.common.session.FakeData.find({ 'project' : project[1] })
+            for data in fakedata:
+                #files.append(data['uid'])
+                if 'uid' in data:
+                    files.append(data)
         logging.warn("list files "+str(files))
         return files
 
     def getsize(self,path):
         import mobyle.common
         mobyle.common.session.register([FakeData])
-        paths = path.split('/') 
-        fakedata = mobyle.common.session.FakeData.find_one( {'uid' : path[1]})
+        paths = path.split('/')
+        filename = paths[2]
+        filename = filename.split('_')[0]
+        fakedata = mobyle.common.session.FakeData.find_one( {'uid' : filename})
         if fakedata is not None:
             return fakedata['size']
         return None
@@ -114,11 +149,12 @@ class MobyleFileSystem(AbstractedFS):
         import mobyle.common
         mobyle.common.session.register([FakeData])
         paths = path.split('/')
-        fakedata = mobyle.common.session.FakeData.find_one( {'uid' : path[1]})
+        #fakedata = mobyle.common.session.FakeData.find_one( {'uid' : path[1]})
         #return fakedata['_id'].getTimestamp()
         # for the moment return current date
         paths = path.split('/')
-        filename = paths[1]
+        filename = paths[2]
+        filename = filename.split('_')[0]
         fakedata = mobyle.common.session.FakeData.find_one( {'uid' : filename})
         from mobyle.common.config import Config
         config = Config().config()
@@ -136,8 +172,9 @@ class MobyleFileSystem(AbstractedFS):
         """Open a file returning its handler."""
         import mobyle.common
         mobyle.common.session.register([FakeData])
+        logging.warn('open file '+filename)
         paths = filename.split('/')
-        filename = paths[1]
+        filename = paths[2]
         filename = filename.split('_')[0]
         fakedata = mobyle.common.session.FakeData.find_one( {'uid' : filename})
         from mobyle.common.config import Config
@@ -167,7 +204,6 @@ class MobyleFileSystem(AbstractedFS):
         drwxrwxrwx   1 owner   group          0 Aug 31 18:50 e-books
         -rw-rw-rw-   1 owner   group        380 Sep 02  3:40 module.py
         """
-        assert isinstance(basedir, unicode), basedir
         if self.cmd_channel.use_gmt_times:
             timefunc = time.gmtime
         else:
@@ -176,36 +212,43 @@ class MobyleFileSystem(AbstractedFS):
         readlink = getattr(self, 'readlink', None)
         now = time.time()
         for basename in listing:
-            if not PY3:
-                try:
+            if not isinstance(basename,FakeProject):
+                if not PY3:
+                    try:
+                        file = os.path.join(basedir, basename['uid'])
+                    except UnicodeDecodeError:
+                        # (Python 2 only) might happen on filesystem not
+                        # supporting UTF8 meaning os.listdir() returned a list
+                        # of mixed bytes and unicode strings:
+                        # http://goo.gl/6DLHD
+                        # http://bugs.python.org/issue683592
+                        file = os.path.join(bytes(basedir), bytes(basename['uid']))
+                        if not isinstance(basename['uid'], unicode):
+                            basename = unicode(basename, 'utf8')
+                else:
                     file = os.path.join(basedir, basename['uid'])
-                except UnicodeDecodeError:
-                    # (Python 2 only) might happen on filesystem not
-                    # supporting UTF8 meaning os.listdir() returned a list
-                    # of mixed bytes and unicode strings:
-                    # http://goo.gl/6DLHD
-                    # http://bugs.python.org/issue683592
-                    file = os.path.join(bytes(basedir), bytes(basename['uid']))
-                    if not isinstance(basename['uid'], unicode):
-                        basename = unicode(basename, 'utf8')
+                try:
+                    from mobyle.common.config import Config
+                    config = Config().config()
+                    st = self.lstat(config.get("app:main","store")+"/pairtree_root/"+basename['path'])
+                except (OSError, FilesystemError):
+                    if ignore_err:
+                        continue
+                    raise
+                size = basename['size']  # file size
+                perms = _filemode(st.st_mode)  # permissions
             else:
-                file = os.path.join(basedir, basename['uid'])
-            try:
-                from mobyle.common.config import Config
-                config = Config().config()
-                st = self.lstat(config.get("app:main","store")+"/pairtree_root/"+basename['path'])
-            except (OSError, FilesystemError):
-                if ignore_err:
-                    continue
-                raise
-
-            perms = _filemode(st.st_mode)  # permissions
+                # This is a project, fake a directory
+                size = 0
+                st = self.lstat(os.path.realpath(__file__))
+                basename['uid'] = str(basename['_id'])
+                perms = "drwxrwxrwx"
             nlinks = st.st_nlink  # number of links to inode
             if not nlinks:  # non-posix system, let's use a bogus value
                 nlinks = 1
             size = st.st_size  # file size
             mtime = timefunc(st.st_mtime)
-            size = basename['size']  # file size
+            
             uname = "mobyle"
             gname = "mobyle"
             

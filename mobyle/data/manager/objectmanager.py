@@ -28,6 +28,19 @@ if mobyle.common.session:
     mobyle.common.session.register([FakeData])
 
 
+class FakeProject(Document):
+    """
+    Fake class to simulate datasets
+    """
+
+    __collection__ = 'fakeproject'
+    __database__ = Config.config().get('app:main','db_name')
+
+    structure = { 'name' : basestring }
+
+if mobyle.common.session:
+    mobyle.common.session.register([FakeProject])
+
 class ObjectManager:
     """
     Manager for datasets.
