@@ -13,3 +13,4 @@ pyramid_celery
 nose
 webtest
 mongokit
+pyftpdlib
