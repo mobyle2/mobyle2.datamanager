@@ -19,12 +19,12 @@ def main():
     from mobyle.common.config import Config
     mobyle_config = Config('/Users/osallou/Development/NOSAVE/mobyle2/web/datamanager/src/mobyle2.datamanager/development.ini').config()
     #mobyle_config = Config().config()
-    import mobyle.common.connection
-    mobyle.common.connection.init_mongo(mobyle_config.get('app:main','db_uri'))
 
     from mobyle.data.ftp.mobyleauthorizer import MobyleAuthorizer
     from mobyle.data.ftp.mobylefilesystem import MobyleFileSystem
 
+    from mobyle.common.users import User
+    from mobyle.common.project import Project
 
     # Instantiate a dummy authorizer for managing 'virtual' users
     authorizer = MobyleAuthorizer()

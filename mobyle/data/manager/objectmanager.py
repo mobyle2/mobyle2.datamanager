@@ -5,7 +5,7 @@ import pairtree
 import logging
 
 import mobyle.common
-from mobyle.common import session
+from mobyle.common import connection
 from mobyle.common.config import Config
 
 from mongokit import Document
@@ -13,6 +13,7 @@ from bson.objectid import ObjectId
 
 from mobyle.data.tools.detector import BioFormat
 
+@connection.register
 class FakeData(Document):
     """
     Fake class to simulate datasets
@@ -24,10 +25,8 @@ class FakeData(Document):
     structure = { 'uid' : basestring, 'name' : basestring, 'path' : basestring, 'status' : int, 'size' : int, 'project' : basestring, 'format' : basestring }
     default_values = {'format': 'txt'}
 
-if mobyle.common.session:
-    mobyle.common.session.register([FakeData])
 
-
+@connection.register
 class FakeProject(Document):
     """
     Fake class to simulate datasets
@@ -38,8 +37,6 @@ class FakeProject(Document):
 
     structure = { 'name' : basestring }
 
-if mobyle.common.session:
-    mobyle.common.session.register([FakeProject])
 
 class ObjectManager:
     """
@@ -75,7 +72,7 @@ class ObjectManager:
         '''
         dataset = None
         try:
-            dataset = mobyle.common.session.FakeData.find_one({ "uid" : uid})
+            dataset = connection.FakeData.find_one({ "uid" : uid})
             if dataset is not None:
                 if dataset['path']:
                     obj = ObjectManager.storage.get_object(uid)
@@ -97,7 +94,7 @@ class ObjectManager:
         '''
         config = Config.config()
         uid = uuid.uuid4().hex
-        dataset = mobyle.common.session.FakeData()
+        dataset = connection.FakeData()
         dataset['name'] = name
         dataset['uid'] = uid
         dataset['status'] = ObjectManager.QUEUED
@@ -115,8 +112,7 @@ class ObjectManager:
         :param status: Status of the  upload/download (QUEUED,DOWNLOADING,DOWNLOADED,ERROR)
         :type status: int
         '''
-        mobyle.common.session.register([FakeData])
-        dataset = mobyle.common.session.FakeData.find_one({ "_id" : ObjectId(options['id'])})
+        dataset = connection.FakeData.find_one({ "_id" : ObjectId(options['id'])})
         if status == ObjectManager.DOWNLOADED:
             config = Config.config()
             uid = dataset['uid']
@@ -160,16 +156,15 @@ class ObjectManager:
         '''
         config = Config.config()
         if 'id' in options and options['id']:
-            dataset = mobyle.common.session.FakeData.find_one({ '_id' : ObjectId(options['id']) })
+            dataset = connection.FakeData.find_one({ '_id' : ObjectId(options['id']) })
             uid = dataset['uid']
         else:
-            dataset = mobyle.common.session.FakeData()
+            dataset = connection.FakeData()
             uid = uuid.uuid4().hex
 
         obj = ObjectManager.storage.get_object(uid)
         with open(file,'rb') as stream:
             obj.add_bytestream(uid, stream)
-        mobyle.common.session.register([FakeData])
 
         dataset['name'] = name
         dataset['uid'] = uid
@@ -197,8 +192,6 @@ if __name__ == "__main__":
     config = Config.config()
     config.set("app:main","store","/tmp/data")
     import mobyle.common.connection
-    mobyle.common.connection.init_mongo('mongodb://localhost/')
-    mobyle.common.session.register([FakeData])
 
     mngr = ObjectManager()
     mngr.store("sample.py",__file__)

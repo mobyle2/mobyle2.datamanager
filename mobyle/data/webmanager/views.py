@@ -18,7 +18,7 @@ import tempfile
 from bson import json_util
 
 import mobyle.common
-from mobyle.common import session
+from mobyle.common import connection
 import mobyle.data.manager.objectmanager
 from mobyle.data.manager.objectmanager import ObjectManager,FakeData
 
@@ -32,11 +32,10 @@ from mobyle.data.manager.background import download
 def my_json(request):
     try:
         datasets = []
-        user = mobyle.common.session.User.find_one({'apikey' : request.params.getone("apikey")  })
+        user = connection.User.find_one({'apikey' : request.params.getone("apikey")  })
         if user:
             try:
-                mobyle.common.session.register([FakeData])
-                fakedata = mobyle.common.session.FakeData.find()
+                fakedata = connection.FakeData.find()
             except Exception as e:
                 logging.error("Fakedata error: "+str(e))
                 return []
@@ -53,10 +52,9 @@ def my(request):
     fakedata = {}
     httpsession = request.session
     if "_id" in httpsession:
-        user = mobyle.common.session.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
+        user = connection.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
         try:
-            mobyle.common.session.register([FakeData])
-            fakedata = mobyle.common.session.FakeData.find()
+            fakedata = connection.FakeData.find()
         except Exception as e:
             logging.error("Fakedata error: "+str(e))
             return { 'user' : user, 'data' : []}
@@ -76,12 +74,12 @@ def login(request):
     try:
         httpsession = request.session
         if "_id" in httpsession:
-            user = mobyle.common.session.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
+            user = connection.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
         else:
-            user = mobyle.common.session.User.find_one({'apikey' : request.params.getone("apikey")  })
+            user = connection.User.find_one({'apikey' : request.params.getone("apikey")  })
         projects = []
-        #user_projects = mobyle.common.session.Project.find({ "users.user" : user })
-        user_projects = mobyle.common.session.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
+        #user_projects = connection.Project.find({ "users.user" : user })
+        user_projects = connection.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
         for up in user_projects:
             projects.append(up["name"])
         user['projects'] = projects
@@ -94,10 +92,9 @@ def login(request):
 def get_user(request):
     httpsession = request.session
     if "_id" in httpsession:
-        user = mobyle.common.session.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
+        user = connection.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
         projects = []
-        #user_projects = mobyle.common.session.Project.find({ "users.user" : user })
-        user_projects = mobyle.common.session.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
+        user_projects = connection.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
         for up in user_projects:
             projects.append(up["name"])
         user['projects'] = projects

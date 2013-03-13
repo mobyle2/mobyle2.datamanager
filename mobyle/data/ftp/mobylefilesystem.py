@@ -4,6 +4,9 @@ import time
 import tempfile
 from pyftpdlib._compat import PY3, u, unicode, property
 
+import mobyle.common
+from mobyle.common import connection
+
 from mobyle.data.manager.objectmanager import FakeData, FakeProject
 
 from bson import ObjectId
@@ -61,12 +64,9 @@ class MobyleFileSystem(AbstractedFS):
 
     def isdir(self, path):
         """If path is a user id, then it is root dir"""
-        import mobyle.common
-        mobyle.common.session.register([FakeData])
         elts = path.split('/')
         try:
-            #user = mobyle.common.session.User.find_one({ '_id' : ObjectId(elts[0]) })
-            user = mobyle.common.session.User.find_one({ '_id' : ObjectId(self._uid) })
+            user = connection.User.find_one({ '_id' : ObjectId(self._uid) })
             # User root
             #if len(elts) == 1:
             if path == '/':
@@ -101,32 +101,28 @@ class MobyleFileSystem(AbstractedFS):
         # if path is a file or a symlink we return information about it
         else:
             logging.warn("list a file: "+path)
-            import mobyle.common
-            mobyle.common.session.register([FakeData])
             # Should of course get fakedatas of user only
-            fakedata = mobyle.common.session.FakeData.find_one({ 'uid' : path })
+            fakedata = connection.FakeData.find_one({ 'uid' : path })
              
             return self.format_list(path, [fakedata])
 
     def listdir(self, path):
         """List the content ie all fakedatas."""
 
-        import mobyle.common
-        mobyle.common.session.register([FakeData,FakeProject])
         files = []
         # Should of course get fakedatas/projects of user only
         elts = path.split('/')
         logging.warn("listdir: path= "+str(elts))
         if path == '/':
             # Root dir, list projects
-            projects = mobyle.common.session.FakeProject.find()
+            projects = connection.FakeProject.find()
             for project in projects:
                 files.append(project)
         else:
             project = elts[1].split('_')
             #TODO fakedata should refer to project ids, not names
             # Should chech ObjectId(project[0])
-            fakedata = mobyle.common.session.FakeData.find({ 'project' : project[1] })
+            fakedata = connection.FakeData.find({ 'project' : project[1] })
             for data in fakedata:
                 #files.append(data['uid'])
                 if 'uid' in data:
@@ -135,27 +131,20 @@ class MobyleFileSystem(AbstractedFS):
         return files
 
     def getsize(self,path):
-        import mobyle.common
-        mobyle.common.session.register([FakeData])
         paths = path.split('/')
         filename = paths[2]
         filename = filename.split('_')[0]
-        fakedata = mobyle.common.session.FakeData.find_one( {'uid' : filename})
+        fakedata = connection.FakeData.find_one( {'uid' : filename})
         if fakedata is not None:
             return fakedata['size']
         return None
 
     def getmtime(self,path):
-        import mobyle.common
-        mobyle.common.session.register([FakeData])
         paths = path.split('/')
-        #fakedata = mobyle.common.session.FakeData.find_one( {'uid' : path[1]})
-        #return fakedata['_id'].getTimestamp()
-        # for the moment return current date
         paths = path.split('/')
         filename = paths[2]
         filename = filename.split('_')[0]
-        fakedata = mobyle.common.session.FakeData.find_one( {'uid' : filename})
+        fakedata = connection.FakeData.find_one( {'uid' : filename})
         from mobyle.common.config import Config
         config = Config().config()
         filename = config.get("app:main","store")+"/pairtree_root/"+fakedata['path']
@@ -170,13 +159,11 @@ class MobyleFileSystem(AbstractedFS):
 
     def open(self, filename, mode):
         """Open a file returning its handler."""
-        import mobyle.common
-        mobyle.common.session.register([FakeData])
         logging.warn('open file '+filename)
         paths = filename.split('/')
         filename = paths[2]
         filename = filename.split('_')[0]
-        fakedata = mobyle.common.session.FakeData.find_one( {'uid' : filename})
+        fakedata = connection.FakeData.find_one( {'uid' : filename})
         from mobyle.common.config import Config
         config = Config().config()
         filename = config.get("app:main","store")+"/pairtree_root/"+fakedata['path']

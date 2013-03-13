@@ -26,18 +26,17 @@ config = Config(args.config).config()
 
 # Init connection
 
-import mobyle.common.connection
-mobyle.common.connection.init_mongo(config.get("app:main","db_uri"))
 
 import mobyle.common
+from mobyle.common import connection
 from mobyle.data.manager.objectmanager import FakeData,FakeProject
 
 # Create root user
-if mobyle.common.session.FakeProject.find({ 'name' : 'sample' }).count() == 0:
-    project = mobyle.common.session.FakeProject()
+if connection.FakeProject.find({ 'name' : 'sample' }).count() == 0:
+    project = connection.FakeProject()
     project['name'] = 'sample'
     project.save()
-    project = mobyle.common.session.FakeProject()
+    project = connection.FakeProject()
     project['name'] = 'sample2'
     project.save()
 

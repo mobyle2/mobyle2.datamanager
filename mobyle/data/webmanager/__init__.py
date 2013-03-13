@@ -39,17 +39,11 @@ def main(global_config, **settings):
     config.include(pyramid_beaker)
     config.include('pyramid_mailer')
 
-    db_uri = settings['db_uri']
-    conn = pymongo.Connection(db_uri, safe=True)
-    config.registry.settings['db_conn'] = conn
-    db = conn[config.registry.settings['db_name']]
 
     from mobyle.common.config import Config
     mobyle_config = Config().config()
     for setting in settings:
       mobyle_config.set('app:main',setting,settings[setting])
-    import mobyle.common.connection
-    mobyle.common.connection.init_mongo(settings['db_uri'])
     #end initialization
 
     config.include(data_include, route_prefix='/data-manager')    

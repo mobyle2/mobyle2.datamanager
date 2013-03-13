@@ -11,8 +11,6 @@ from mobyle.data.manager.objectmanager import ObjectManager
 
 conf = Config.config()
 
-import mobyle.common.connection
-mobyle.common.connection.init_mongo(conf.get('app:main','db_uri'))
 
 
 celery = Celery('tasks', broker=conf.get('app:main','db_uri')+'/'+conf.get('app:main','db_name')+'/')

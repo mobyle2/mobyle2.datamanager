@@ -14,12 +14,10 @@ from mobyle.common.config import Config
 
 Config("development.ini")
 
-from mobyle.common import session
+from mobyle.common import connection
 
 base_url = "http://localhost:6543"
 
-import mobyle.common.connection
-mobyle.common.connection.init_mongo("mongodb://localhost/")
 import mobyle.data.manager
 import mobyle.data.manager.objectmanager
 from mobyle.data.manager.objectmanager import ObjectManager,FakeData
@@ -38,23 +36,22 @@ class DataManagerTest(unittest.TestCase):
             from mobyle.data.manager.objectmanager import ObjectManager
             ObjectManager.storage = None
             self.manager = ObjectManager()
-            mobyle.common.session.register([FakeData])
-            datasets = mobyle.common.session.FakeData.find()
+            datasets = connection.FakeData.find()
             for data in datasets:
                 data.delete()
 
 
         def test_add(self):
             id = self.manager.add("sample.py",__file__)
-            data = mobyle.common.session.FakeData.find_one({ '_id' : ObjectId(id) }) 
+            data = connection.FakeData.find_one({ '_id' : ObjectId(id) }) 
             self.assertTrue(data is not None)
             self.assertTrue(data['status']==ObjectManager.QUEUED)
 
 
 	def test_store(self):
-            options = { 'uncompress' : False , 'group' : False }
+            options = { 'uncompress' : False , 'group' : False, 'type' : 0 }
             id = self.manager.store('sample.py',__file__,options)
-            data = mobyle.common.session.FakeData.find_one({ '_id' : ObjectId(id) })
+            data = connection.FakeData.find_one({ '_id' : ObjectId(id) })
             self.assertTrue(data is not None)
             self.assertTrue(data['status']==ObjectManager.DOWNLOADED)
             self.assertTrue(os.path.exists(DataManagerTest.datadir+"/pairtree_root/"+data['path']))
@@ -62,7 +59,7 @@ class DataManagerTest(unittest.TestCase):
 	def test_update(self):
             id = self.manager.add("sample.py",__file__)
             self.manager.update(ObjectManager.ERROR,{ "id" : id})
-            data = mobyle.common.session.FakeData.find_one({ '_id' : ObjectId(id) })
+            data = connection.FakeData.find_one({ '_id' : ObjectId(id) })
             self.assertTrue(data is not None)
             self.assertTrue(data['status']==ObjectManager.ERROR)
             
