@@ -3,7 +3,8 @@
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 
-
+import sys
+import argparse
 import logging
 
 """
@@ -16,9 +17,18 @@ FTP PUT and DELETE are not implemented yet, only GET
 """
 
 def main():
+
+    parser = argparse.ArgumentParser(description='Initialize ftp configuration.')
+    parser.add_argument('--config')
+
+    args = parser.parse_args()
+
+    if not args.config:
+        print "config argument is missing"
+        sys.exit(2)
+
     from mobyle.common.config import Config
-    mobyle_config = Config('/Users/osallou/Development/NOSAVE/mobyle2/web/datamanager/src/mobyle2.datamanager/development.ini').config()
-    #mobyle_config = Config().config()
+    mobyle_config = Config(args.config).config()
 
     from mobyle.data.ftp.mobyleauthorizer import MobyleAuthorizer
     from mobyle.data.ftp.mobylefilesystem import MobyleFileSystem
