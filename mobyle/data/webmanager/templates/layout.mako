@@ -58,7 +58,7 @@ from pyramid.url import route_url,static_url
   <div id="flash">
     <% flash = request.session.pop_flash() %>
         % for message in flash:
-        ${message}<br>
+        ${message|n}<br>
         % endfor
   </div>
   % endif

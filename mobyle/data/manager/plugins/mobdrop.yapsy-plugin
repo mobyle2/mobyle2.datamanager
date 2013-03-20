@@ -1,0 +1,9 @@
+[Core]
+Name = dropbox
+Module = mobdrop
+   
+[Documentation]
+Description = Manage upload and download with DropBox
+Author = Olivier Sallou <osallou@irisa.fr>
+Version = 0.1
+Website = http://www.genouest.org

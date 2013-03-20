@@ -3,6 +3,10 @@
 <%
 from pyramid.url import route_url,static_url
 from mobyle.data.manager.objectmanager import ObjectManager
+from mobyle.data.manager.pluginmanager import DataPluginManager
+
+DataPluginManager.get_manager()
+
 %>
 
 <div class="container">
@@ -22,10 +26,15 @@ from mobyle.data.manager.objectmanager import ObjectManager
     status = '<span class="label label-info">Downloading</span>'
   if d['status'] == 3:
     status = '<span class="label label-important">Error</span>'
-  if d['status'] == 2 or d['status'] == 3:
+    actions += '<button class="btn btn-info update" data-uid="'+str(d['_id'])+'">Update</button>'
+    actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'">Delete</button>'
+  if d['status'] == 2:
     actions = '<button class="btn btn-info download" data-uid="'+str(d['path'])+'">Download</button>'
     actions += '<button class="btn btn-info update" data-uid="'+str(d['_id'])+'">Update</button>'
     actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'">Delete</button>'
+    for protocol in DataPluginManager.supported_protocols:
+        actions += '<img class="btn-data-plugin" data-plugin="'+DataPluginManager.supported_protocols[protocol]+'" src="'+request.static_url('mobyle.data.webmanager:static/'+DataPluginManager.supported_protocols[protocol]+'.png')+'" data-uid="'+str(d['_id'])+'"></img>'
+
 %>
 <tr id="tr-${d['uid']}"><td>${status |n}</td><td>
 % if 'project' in d:
@@ -43,7 +52,7 @@ $('.delete').click(function(e) {
         uid = $(this).attr('data-uid')
         $.ajax({
             type: 'delete',
-            url: "${route_url('data',request,uid='')}/"+ uid,
+            url: "${request.route_url('data',request,uid='')}/"+ uid,
             success: function() {
                $("#tr-"+uid).remove();
             }
@@ -54,6 +63,10 @@ $('.delete').click(function(e) {
 objectmanager = ObjectManager()
 downloadpath = objectmanager.get_storage_path()
 %>
+
+$('.btn-data-plugin').click(function(e) {
+        window.open("${request.route_url('data_plugin')}/"+$(this).attr('data-plugin')+"/upload");
+});
 
 $('.download').click(function(e) {
         uid = $(this).attr('data-uid');

@@ -26,6 +26,11 @@ def data_include(config):
 
     config.add_static_view('static', 'mobyle.data.webmanager:static', cache_max_age=3600)
 
+    config.add_route('data_plugin','/plugin')
+    config.add_route('data_plugin_upload','/plugin/{plugin}/upload')
+    config.add_route('data_plugin_download','/plugin/{plugin}/download')
+
+
 def objectmanager_include(config):
     from  mobyle.data.manager.objectmanager import ObjectManager
     objectmanager = ObjectManager()
@@ -46,9 +51,12 @@ def main(global_config, **settings):
       mobyle_config.set('app:main',setting,settings[setting])
     #end initialization
 
-    config.include(data_include, route_prefix='/data-manager')    
-    
+    config.include(data_include, route_prefix='/data-manager')
+
     config.scan()
+
+    from mobyle.common.users import User
+    from mobyle.common.project import Project
 
     config.include(objectmanager_include, route_prefix='/data-manager')
 

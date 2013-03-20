@@ -2,9 +2,10 @@
 from pyramid.view import view_config
 from pyramid.security import remember, authenticated_userid, forget
 
-from pyramid.httpexceptions import HTTPFound
+from pyramid.httpexceptions import HTTPFound, HTTPNotFound
 from pyramid.renderers import render_to_response
 from pyramid.response import Response
+from pyramid.view import  render_view_to_response
 
 import json
 import urllib
@@ -24,9 +25,36 @@ from mobyle.data.manager.objectmanager import ObjectManager,FakeData
 
 from bson import ObjectId
 
-from pyramid.httpexceptions import HTTPFound
 
 from mobyle.data.manager.background import download
+
+from  mobyle.data.manager.pluginmanager import DataPluginManager
+
+@view_config(route_name='data_plugin_upload')
+def data_plugin_add(request):
+    #TODO manage according to route plugin, call plugin methods
+    httpsession = request.session
+    import mobyle.data.manager.plugins
+    #from mobyle.data.manager.plugins.mobdrop import MobDrop
+    #drop = MobDrop() 
+    dataPluginManager = DataPluginManager.get_manager()
+    plugin = dataPluginManager.getPluginByName(request.matchdict['plugin'])
+    if plugin is None:
+        return HTTPNotFound('No plugin '+request.matchdict['plugin']) 
+    drop = plugin.plugin_object
+    (authorized , msg) =  drop.authorized(httpsession)
+    if not authorized:
+        request.session.flash(msg)
+        values = my(request)
+        return render_to_response('mobyle.data.webmanager:templates/my.mako',values,request=request)
+
+    drop.upload(__file__)
+    request.session.flash('file uploaded to DropBox')
+    values = my(request)
+    return render_to_response('mobyle.data.webmanager:templates/my.mako',values,request=request)
+    
+
+
 
 @view_config(route_name='my.json', renderer='json')
 def my_json(request):
@@ -45,6 +73,8 @@ def my_json(request):
     except Exception:
         datasets = []
     return json.dumps( datasets , default=json_util.default)
+
+
 
 @view_config(route_name='my', renderer='mobyle.data.webmanager:templates/my.mako')
 def my(request):
@@ -138,6 +168,12 @@ def upload_remote_data(request):
       options['project'] = request.params.getone('project')
     except Exception:
       options['project'] = None
+
+    try:
+      options['protocol'] = request.params.getone('protocol')
+    except Exception:
+      options['protocol'] = None
+
 
     try:
       options['id'] = request.params.getone('id')

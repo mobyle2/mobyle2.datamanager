@@ -14,3 +14,4 @@ nose
 webtest
 mongokit
 pyftpdlib
+yapsy

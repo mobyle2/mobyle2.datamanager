@@ -25,11 +25,15 @@ def download(furl,options={}):
     :param options: name,id,.. of the file
     :type options: dict
     '''
-    logging.info("Download in background file "+furl)
+    logging.info("Download in background file "+str(options['protocol'])+':'+furl)
     mngr = ObjectManager()
     mngr.update(ObjectManager.DOWNLOADING,options)
+    if options['protocol'] not in ['http://','ftp://']:
+        logging.error("This protocol is not yet supported: "+str(options['protocol']))
+        mngr.update(ObjectManager.ERROR,options)
+        return
     try:
-        f = urllib2.urlopen(furl)
+        f = urllib2.urlopen(options['protocol']+furl)
         (out,file_path) = tempfile.mkstemp()
         output_file = open(file_path, 'wb')
         output_file.write(f.read())
