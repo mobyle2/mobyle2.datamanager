@@ -33,8 +33,7 @@ DataPluginManager.get_manager()
     actions += '<button class="btn btn-info update" data-uid="'+str(d['_id'])+'">Update</button>'
     actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'">Delete</button>'
     for protocol in DataPluginManager.supported_protocols:
-        actions += '<img class="btn-data-plugin" data-plugin="'+DataPluginManager.supported_protocols[protocol]+'" src="'+request.static_url('mobyle.data.webmanager:static/'+DataPluginManager.supported_protocols[protocol]+'.png')+'" data-uid="'+str(d['_id'])+'"></img>'
-
+        actions += '<button class="btn btn-info btn-data-plugin" data-plugin="'+DataPluginManager.supported_protocols[protocol]+'" data-uid="'+str(d['_id'])+'"><li class="icon-upload"> </li>'+DataPluginManager.supported_protocols[protocol]+'</button>'
 %>
 <tr id="tr-${d['uid']}"><td>${status |n}</td><td>
 % if 'project' in d:
