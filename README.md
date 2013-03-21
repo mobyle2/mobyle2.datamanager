@@ -38,4 +38,4 @@ Configuration (broker, workers etc...) should be set in ini file.
 Data manager supports plugins to upload or download files (delayed with Celery).
 Plugins are delivered independently, and are based on Yapsy for plugin management.
 
-A DropBox plugin is available at https://github.com/osallou/mobyle2.datamanager.dropbox
+A DropBox plugin is available at https://github.com/mobyle2/mobyle2.datamanager.dropbox
