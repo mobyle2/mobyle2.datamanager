@@ -32,11 +32,9 @@ from  mobyle.data.manager.pluginmanager import DataPluginManager
 
 @view_config(route_name='data_plugin_upload')
 def data_plugin_add(request):
-    #TODO manage according to route plugin, call plugin methods
     httpsession = request.session
     import mobyle.data.manager.plugins
-    #from mobyle.data.manager.plugins.mobdrop import MobDrop
-    #drop = MobDrop() 
+
     dataPluginManager = DataPluginManager.get_manager()
     plugin = dataPluginManager.getPluginByName(request.matchdict['plugin'])
     if plugin is None:
@@ -113,6 +111,8 @@ def login(request):
     try:
         projects = []
         if "_id" in httpsession:
+            #DEBUG
+            projects.append("sample")
             user_projects = connection.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
             for up in user_projects:
                 projects.append(up["name"])
@@ -128,6 +128,8 @@ def get_user(request):
         user = connection.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
         projects = []
         try:
+            #DEBUG
+            projects.append("sample")
             user_projects = connection.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
             for up in user_projects:
                 projects.append(up["name"])
@@ -150,19 +152,21 @@ def my_view(request):
 @view_config(route_name='upload_remote_data', renderer='mobyle.data.webmanager:templates/index.mako')
 def upload_remote_data(request):
     manager = ObjectManager()
+    dataPluginManager = DataPluginManager.get_manager()
 
     options = {}
     try:
       options['rurl'] = request.params.getone('rurl')
-      if options['rurl'].startswith('file:'):
-          request.session.flash('file:// access denied per configuration')
-          files = {}
-          return { 'user' : get_user(request) }
     except Exception:
       options['rurl'] = None
     if options['rurl'] is None:
         files = {}
         return { 'user' : get_user(request) }
+
+    try:
+      options['type'] = int(request.params.getone('type'))
+    except Exception:
+      options['type'] = 0
 
     try:
       options['project'] = request.params.getone('project')
@@ -173,7 +177,11 @@ def upload_remote_data(request):
       options['protocol'] = request.params.getone('protocol')
     except Exception:
       options['protocol'] = None
-
+      
+    # Try to protect against unexpected protocols
+    if options['protocol'] not in DataPluginManager.supported_protocols:
+        request.session.flash("Protocol not supported")
+        return { 'user' : get_user(request) }
 
     try:
       options['id'] = request.params.getone('id')
@@ -192,9 +200,25 @@ def upload_remote_data(request):
     except Exception:
       options['group'] = False
 
+
     files = {}
     if options['id'] is None:
         options['id'] = manager.add(options['rurl'],options)
+        
+    # If http,ftp,scp i.e. base protocols, do not check plugins
+    if options['protocol'] is not None and options['protocol'] not in ['http','ftp','scp']:    
+        plugin = dataPluginManager.getPluginByName(options['protocol'])
+        if plugin is None:
+            return HTTPNotFound('No plugin '+request.matchdict['plugin']) 
+        drop = plugin.plugin_object
+        (authorized , msg) =  drop.authorized(request.session)
+        if not authorized:
+            request.session.flash(msg)
+            values = my_view(request)
+            return render_to_response('mobyle.data.webmanager:templates/index.mako',values,request=request)
+         # Store session objects necessary for plugins
+        options = drop.set_options(request.session, options)
+        
     download.delay(options['rurl'],options)
     request.session.flash('File download request in progress')
     return { 'user' : get_user(request) }

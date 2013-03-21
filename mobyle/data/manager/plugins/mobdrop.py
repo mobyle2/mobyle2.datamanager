@@ -76,14 +76,29 @@ class MobDrop(IPlugin):
         client = client.DropboxClient(sess)
         response = client.put_file('/'+file, f)
 
-    def download(self,file):
+
+    def set_options(self,httpsession , options):
+        options['drop_access_token'] = httpsession['drop_access_token']
+        return options
+
+    def download(self,file,options):
         '''Plugin interface method to download a file and create a new dataset
 
         :param file: Path to the remote file to download
         :type file: str
+        :param options: context parameters
+        :type options: list
+        :return: tmp file path
         '''
         from dropbox import client
+        sess.set_token(options['drop_access_token'].key,options['drop_access_token'].secret)
         client = client.DropboxClient(sess)
-        f, metadata = client.get_file_and_metadata('file')
-        #TODO delay download tack with Celery
-        return metadata
+        logging.warn("DropBox - download request for "+file)
+        folder_metadata = client.metadata('/')
+        logging.warn("/ content "+str(folder_metadata))
+        f, metadata = client.get_file_and_metadata(file)
+        (out,file_path) = tempfile.mkstemp()
+        output_file = open(file_path, 'wb')
+        output_file.write(f.read())
+        return file_path
+

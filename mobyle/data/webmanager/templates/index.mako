@@ -12,7 +12,7 @@
     </blockquote>
 % endif
 
-    <form id="remotefileupload" action="/remotedata" method="POST">
+    <form id="remotefileupload" action="${request.route_url('upload_remote_data')}" method="POST">
     <legend>Remote dataset</legend>
     <div class="control-group">
     <label>Project</label>
@@ -76,7 +76,7 @@
     </form>
     <br>
     <!-- The file upload form used as target for the file upload widget -->
-    <form id="fileupload" action="/data/" method="POST" enctype="multipart/form-data">
+    <form id="fileupload" action="${request.route_url('upload_data')}" method="POST" enctype="multipart/form-data">
 
     <legend>Upload dataset</legend>
     <div class="control-group">

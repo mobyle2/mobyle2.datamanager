@@ -8,6 +8,7 @@ from celery.task import task
 from mobyle.common.config import Config
 from mobyle.data.manager.objectmanager import ObjectManager
 
+from  mobyle.data.manager.pluginmanager import DataPluginManager
 
 conf = Config.config()
 
@@ -28,18 +29,29 @@ def download(furl,options={}):
     logging.info("Download in background file "+str(options['protocol'])+':'+furl)
     mngr = ObjectManager()
     mngr.update(ObjectManager.DOWNLOADING,options)
-    if options['protocol'] not in ['http://','ftp://']:
-        logging.error("This protocol is not yet supported: "+str(options['protocol']))
-        mngr.update(ObjectManager.ERROR,options)
-        return
+
+    dataPluginManager = DataPluginManager.get_manager()
+    
     try:
-        f = urllib2.urlopen(options['protocol']+furl)
-        (out,file_path) = tempfile.mkstemp()
-        output_file = open(file_path, 'wb')
-        output_file.write(f.read())
-        options['file'] = file_path
-        mngr.update(ObjectManager.DOWNLOADED,options)
-        os.remove(file_path)
+        if options['protocol'] in ['http://','ftp://']:
+            f = urllib2.urlopen(options['protocol']+furl)
+            (out,file_path) = tempfile.mkstemp()
+            output_file = open(file_path, 'wb')
+            output_file.write(f.read())
+            options['file'] = file_path
+            mngr.update(ObjectManager.DOWNLOADED,options)
+            os.remove(file_path)
+        elif options['protocol'] in DataPluginManager.supported_protocols:
+            # Use plugins
+            plugin = dataPluginManager.getPluginByName(options['protocol'])
+            drop = plugin.plugin_object
+            file_path =  drop.download(furl,options)
+            options['file'] = file_path
+            mngr.update(ObjectManager.DOWNLOADED,options)
+            os.remove(file_path)
+        else:
+            logging.error("no matching protocol: "+str(options['protocol']))
+            mngr.update(ObjectManager.ERROR,options)           
     except Exception as e:
         logging.error("Download error: "+str(e))
         mngr.update(ObjectManager.ERROR,options)
