@@ -32,3 +32,10 @@ To start celery:
     pceleryd src/datamngr/development.ini
 
 Configuration (broker, workers etc...) should be set in ini file.
+
+# Plugins
+
+Data manager supports plugins to upload or download files (delayed with Celery).
+Plugins are delivered independently, and are based on Yapsy for plugin management.
+
+A DropBox plugin is available at https://github.com/osallou/mobyle2.datamanager.dropbox
