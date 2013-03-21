@@ -64,7 +64,7 @@ downloadpath = objectmanager.get_storage_path()
 %>
 
 $('.btn-data-plugin').click(function(e) {
-        window.open("${request.route_url('data_plugin')}/"+$(this).attr('data-plugin')+"/upload");
+        window.open("${request.route_url('data_plugin')}/"+$(this).attr('data-plugin')+"/upload?protocol="+$(this).attr('data-plugin')+"&id="+$(this).attr('data-uid'));
 });
 
 $('.download').click(function(e) {

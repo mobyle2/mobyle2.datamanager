@@ -73,16 +73,19 @@ class MobDrop(IPlugin):
         return access_token
 
 
-    def upload(self,file):
+    def upload(self,file, options):
         '''Plugin interface method to upload a file
 
         :param file: Path to the file to upload
         :type file: str
+        :param options: context parameters
+        :type options: list
         '''
         f = open(file)
         from dropbox import client
+        self.sess.set_token(options['drop_access_token'].key,options['drop_access_token'].secret)
         client = client.DropboxClient(self.sess)
-        response = client.put_file('/'+file, f)
+        response = client.put_file('/'+options['name'], f)
 
 
     def set_options(self,httpsession , options):

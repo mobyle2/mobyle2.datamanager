@@ -16,6 +16,26 @@ conf = Config.config()
 
 celery = Celery('tasks', broker=conf.get('app:main','db_uri')+'/'+conf.get('app:main','db_name')+'/')
 
+
+
+@task
+def upload(furl,options={}):
+    '''
+    Upload a remote file (plugins)
+
+    :param furl: path to the file
+    :type furl: str
+    :param options: name,id,.. of the file
+    :type options: dict
+    '''
+    logging.info("Upload in background file "+options['name']+':'+furl)
+    mngr = ObjectManager()
+    dataPluginManager = DataPluginManager.get_manager()
+    if options['protocol'] in DataPluginManager.supported_protocols:
+        plugin = dataPluginManager.getPluginByName(options['protocol'])
+        drop = plugin.plugin_object
+        drop.upload(furl,options)
+
 @task
 def download(furl,options={}):
     '''

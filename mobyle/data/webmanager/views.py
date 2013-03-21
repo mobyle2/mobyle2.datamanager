@@ -13,7 +13,7 @@ import bcrypt
 import re
 import logging
 import os
-
+import pairtree
 import tempfile
 
 from bson import json_util
@@ -26,14 +26,33 @@ from mobyle.data.manager.objectmanager import ObjectManager,FakeData
 from bson import ObjectId
 
 
-from mobyle.data.manager.background import download
+from mobyle.data.manager.background import download,upload
 
 from  mobyle.data.manager.pluginmanager import DataPluginManager
 
+
+base_protocols = ['http://','ftp://','scp://']
+
 @view_config(route_name='data_plugin_upload')
-def data_plugin_add(request):
+def data_plugin_aupload(request):
     httpsession = request.session
     import mobyle.data.manager.plugins
+    
+    options = {}
+    try:
+      id = request.params.getone('id')
+      options['protocol'] = request.params.getone('protocol')
+      manager = ObjectManager()
+      dataset = connection.FakeData.find_one({ "_id" : ObjectId(id)})
+      options['id'] = id
+      uid = dataset['uid']
+      options['name'] = dataset['name']
+      file = manager.get_storage_path()+'/'+pairtree.id2path(uid)+"/"+uid
+    except Exception as e:
+        logging.error("Wrong input paramerers: "+str(e))
+        request.session.flash("Wrong input paramerers")
+        values = my(request)
+        return render_to_response('mobyle.data.webmanager:templates/my.mako',values,request=request)
 
     dataPluginManager = DataPluginManager.get_manager()
     plugin = dataPluginManager.getPluginByName(request.matchdict['plugin'])
@@ -46,8 +65,9 @@ def data_plugin_add(request):
         values = my(request)
         return render_to_response('mobyle.data.webmanager:templates/my.mako',values,request=request)
 
-    drop.upload(__file__)
-    request.session.flash('file uploaded to DropBox')
+    options = drop.set_options(request.session, options)
+    upload.delay(file,options)
+    request.session.flash('Upload to DropBox in progress')
     values = my(request)
     return render_to_response('mobyle.data.webmanager:templates/my.mako',values,request=request)
     
@@ -179,7 +199,7 @@ def upload_remote_data(request):
       options['protocol'] = None
       
     # Try to protect against unexpected protocols
-    if options['protocol'] not in DataPluginManager.supported_protocols:
+    if options['protocol'] not in DataPluginManager.supported_protocols and options['protocol'] not in base_protocols:
         request.session.flash("Protocol not supported")
         return { 'user' : get_user(request) }
 
@@ -206,7 +226,7 @@ def upload_remote_data(request):
         options['id'] = manager.add(options['rurl'],options)
         
     # If http,ftp,scp i.e. base protocols, do not check plugins
-    if options['protocol'] is not None and options['protocol'] not in ['http','ftp','scp']:    
+    if options['protocol'] is not None and options['protocol'] not in base_protocols:    
         plugin = dataPluginManager.getPluginByName(options['protocol'])
         if plugin is None:
             return HTTPNotFound('No plugin '+request.matchdict['plugin']) 
