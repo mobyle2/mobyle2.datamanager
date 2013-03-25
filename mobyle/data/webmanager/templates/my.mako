@@ -26,20 +26,13 @@ DataPluginManager.get_manager()
     status = '<span class="label label-info">Downloading</span>'
   if d['status'] == 3:
     status = '<span class="label label-important">Error</span>'
-    #actions += '<button class="btn btn-info update" data-uid="'+str(d['_id'])+'">Update</button>'
-    #actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'">Delete</button>'
     actions += '<button class="btn btn-info update" data-uid="'+str(d['_id'])+'"><li class="icon-refresh"> </li></button>'
-    actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'"><li class="icon-remove"> </li></button>'
+    actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'" data-fileid="'+str(d['uid'])+'"><li class="icon-remove"> </li></button>'
   if d['status'] == 2:
     actions = '<a class="btn btn-info datasetmodal" data-uid="'+str(d['_id'])+'" role="button" href="#datasetModal" data-info="'+str(d['project'])+','+d['name']+','+str(d['size'])+','+str(d['format'])+'"><li class="icon-eye-open"> </li></a>'
     actions += '<button class="btn btn-info download" data-uid="'+str(d['path'])+'"><li class="icon-download"> </li></button>'
     actions += '<button class="btn btn-info update" data-uid="'+str(d['_id'])+'"><li class="icon-refresh"> </li></button>'
-    actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'"><li class="icon-remove"> </li></button>'
-    #actions += '<button class="btn btn-info download" data-uid="'+str(d['path'])+'">Download</button>'
-    #actions += '<button class="btn btn-info update" data-uid="'+str(d['_id'])+'">Update</button>'
-    #actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'">Delete</button>'
-    #for protocol in DataPluginManager.supported_protocols:
-    #    actions += '<button class="btn btn-info btn-data-plugin" data-plugin="'+DataPluginManager.supported_protocols[protocol]+'" data-uid="'+str(d['_id'])+'"><li class="icon-upload"> </li>'+DataPluginManager.supported_protocols[protocol]+'</button>'
+    actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'" data-fileid="'+str(d['uid'])+'"><li class="icon-remove"> </li></button>'
 %>
 <tr id="tr-${d['uid']}"><td>${status |n}</td><td>
 % if 'project' in d:
@@ -86,10 +79,10 @@ $('.datasetmodal').click(function(e) {
 });
 
 $('.delete').click(function(e) {
-        uid = $(this).attr('data-uid')
+        uid = $(this).attr('data-fileid')
         $.ajax({
             type: 'delete',
-            url: "${request.route_url('data',request,uid='')}/"+ uid,
+            url: "${request.route_url('data',uid='')}"+ uid,
             success: function() {
                $("#tr-"+uid).remove();
             }
