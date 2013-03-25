@@ -146,8 +146,6 @@ def get_user(request):
         user = connection.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
         projects = []
         try:
-            #DEBUG
-            projects.append("sample")
             user_projects = connection.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
             for up in user_projects:
                 projects.append(up["name"])
