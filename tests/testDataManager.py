@@ -7,6 +7,8 @@ import pymongo
 import copy
 import os
 
+import logging
+
 from bson.objectid import ObjectId
 
 import mobyle.common
@@ -33,7 +35,6 @@ class DataManagerTest(unittest.TestCase):
             dirname, filename = os.path.split(os.path.abspath(__file__))
             DataManagerTest.datadir = dirname + "/data"
             config.set("app:main","store",DataManagerTest.datadir)
-            from mobyle.data.manager.objectmanager import ObjectManager
             ObjectManager.storage = None
             self.manager = ObjectManager()
             datasets = connection.FakeData.find()
