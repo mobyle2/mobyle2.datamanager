@@ -49,7 +49,7 @@ if connection.User.find({ 'first_name' : 'John' }).count() == 0:
 
     project = connection.Project()
     project['name'] = 'sample'
-    project['owner'] = 'Johnny'
+    project['owner'] = user
     project['users'].append({ 'user' : user, 'role' : 'myrole'})
     project.save()
 

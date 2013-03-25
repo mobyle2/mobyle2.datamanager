@@ -131,8 +131,6 @@ def login(request):
     try:
         projects = []
         if "_id" in httpsession:
-            #DEBUG
-            projects.append("sample")
             user_projects = connection.Project.find({ "users" : { "$elemMatch":{ 'user.$id' :  user['_id']}}})
             for up in user_projects:
                 projects.append(up["name"])
