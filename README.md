@@ -24,6 +24,8 @@ In case of remote_date file://
  - only only local registered users (ldap)
  - limit access to a list of root directories
 
+Add revert possibility for files from a previous version of file
+
 # Background tasks
 
 Background tasks are manaed with celery.
