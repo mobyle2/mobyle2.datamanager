@@ -3,6 +3,7 @@ from pairtree import *
 import uuid
 import pairtree
 import logging
+import datetime
 
 import mobyle.common
 from mobyle.common.connection import connection
@@ -10,6 +11,8 @@ from mobyle.common.config import Config
 
 from mongokit import Document
 from bson.objectid import ObjectId
+
+from git import *
 
 from mobyle.data.tools.detector import BioFormat
 
@@ -46,6 +49,8 @@ class ObjectManager:
     """
 
     storage = None
+    # Git repo
+    repo = None
 
     QUEUED = 0
     DOWNLOADING = 1
@@ -53,10 +58,14 @@ class ObjectManager:
     ERROR = 3
 
     def __init__(self):
+        config = Config.config()
+        logging.error("store = "+str(ObjectManager.storage)+", set to "+config.get("app:main","store"))
         if ObjectManager.storage is None:
             config = Config.config()
             f = PairtreeStorageFactory()
             ObjectManager.storage = f.get_store(store_dir=config.get("app:main","store"), uri_base="http://")
+            logging.error("store = "+str(config.get("app:main","store")))
+            ObjectManager.repo = Repo.init(self.get_storage_path())
 
     def get_storage_path(self):
         '''Get path to the storage'''
@@ -186,12 +195,47 @@ class ObjectManager:
         dataset['format'] = format
 
         dataset.save()
+
+        index = ObjectManager.repo.index
+        index.add([dataset['path']])
+        if 'msg' in options:
+            msg = options['msg']
+        else:
+            msg = "Update file content"
+        index.commit(msg+" "+dataset['name'])
+
         return dataset['_id']
+
+
+    def history(self,id):
+        dataset = connection.FakeData.find_one({ '_id' : ObjectId(id) })
+        uid = dataset['uid']
+        path = pairtree.id2path(uid)+"/"+uid
+        head = ObjectManager.repo.head
+        #master = head.reference
+        commits = []
+        for commit in head.commit.iter_parents(paths='',skip=0):
+            if commit.count(paths=path) >= 0:
+                commits.append({ 'committed_date' : commit.committed_date, 'message' : commit.message })
+        #return master.log()
+        return commits
+          
+
+
 
 if __name__ == "__main__":
     config = Config.config()
-    config.set("app:main","store","/tmp/data")
+    config.set("app:main","store","/tmp/data-test")
     import mobyle.common.connection
 
     mngr = ObjectManager()
-    mngr.store("sample.py",__file__)
+    options = {}
+    options['type'] = 0
+    options['project'] = 'sample'
+    id = mngr.store("sample.py",__file__,options)
+    options['id'] = id
+    options['msg'] = 'file replace'
+    id = mngr.store("sample.py",__file__,options)
+    logs = mngr.history(id)
+    for log in logs:
+        print "Log: "+str(datetime.datetime.fromtimestamp(log.committed_date).strftime('%Y-%m-%d %H:%M:%S'))+", "+log.message

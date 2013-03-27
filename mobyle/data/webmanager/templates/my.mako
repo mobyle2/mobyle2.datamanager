@@ -29,7 +29,7 @@ DataPluginManager.get_manager()
     actions += '<button class="btn btn-info update" data-uid="'+str(d['_id'])+'"><li class="icon-refresh"> </li></button>'
     actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'" data-fileid="'+str(d['uid'])+'"><li class="icon-remove"> </li></button>'
   if d['status'] == 2:
-    actions = '<a class="btn btn-info datasetmodal" data-uid="'+str(d['_id'])+'" role="button" href="#datasetModal" data-info="'+str(d['project'])+','+d['name']+','+str(d['size'])+','+str(d['format'])+'"><li class="icon-eye-open"> </li></a>'
+    actions = '<a class="btn btn-info datasetmodal" data-uid="'+str(d['_id'])+'" role="button" href="#datasetModal"><li class="icon-eye-open"> </li></a>'
     actions += '<button class="btn btn-info download" data-uid="'+str(d['path'])+'"><li class="icon-download"> </li></button>'
     actions += '<button class="btn btn-info update" data-uid="'+str(d['_id'])+'"><li class="icon-refresh"> </li></button>'
     actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'" data-fileid="'+str(d['uid'])+'"><li class="icon-remove"> </li></button>'
@@ -66,15 +66,33 @@ $(function(){
 
 $('.datasetmodal').click(function(e) {
     uid = $(this).attr('data-uid');
-    info = $(this).attr('data-info').split(',');
-    infoHtml = '<h2>'+info[0]+' - '+info[1]+'</h2>';
-    infoHtml += '<div>Size: '+info[2]+'</div>';
-    infoHtml += '<div>Format: '+info[3]+'</div>';
-    $('#modal-body').html(infoHtml);
-    $('#datasetModal').find('button').attr('data-uid', uid);
-    $('#datasetModal').modal({
-      show: true
-    });
+        $.getJSON("${request.route_url('data',uid='')}"+ uid,function(data) {
+                infoHtml = '<h2>'+data['dataset']['name']+' - '+data['dataset']['project']+'</h2>';
+                infoHtml += '<div>Size: '+data['dataset']['size']+'</div>';
+                infoHtml += '<div>Format: '+data['dataset']['format']+'</div>';
+                infoHtml += '<h3>History</h3>'
+                infoHtml += '<table class="table table-striped">';
+                infoHtml += '<thead><tr><th>Date</th><th>Message</th></tr></thead>';
+                $.each(data['history'], function(key, val) {
+                    var a = new Date(val['committed_date'] * 1000);
+                    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                    var year = a.getFullYear();
+                    var month = months[a.getMonth()];
+                    var date = a.getDate();
+                    var hour = a.getHours();
+                    var min = a.getMinutes();
+                    var sec = a.getSeconds();
+                    var time = date+','+month+' '+year+' '+hour+':'+min+':'+sec ;
+                    infoHtml += '<tr><td>'+time+'</td><td>'+val['message']+'</td></tr>'; 
+                });
+                infoHtml += '</table>';
+                $('#modal-body').html(infoHtml);
+                $('#datasetModal').find('button').attr('data-uid', data['dataset']['uid']);
+                $('#datasetModal').modal({
+                    show: true
+                });
+        });
+
 
 });
 

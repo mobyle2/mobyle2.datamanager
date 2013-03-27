@@ -246,6 +246,13 @@ def data(request):
         manager = ObjectManager()
         manager.delete(file)
         return {}
+    if request.method == 'GET':
+        id = request.matchdict['uid']
+        dataset = connection.FakeData.find_one({ "_id" : ObjectId(id)})
+        manager = ObjectManager()
+        #return json.dumps( { 'dataset' : dataset, 'history' : manager.history(id) } , default=json_util.default) 
+        return Response(json.dumps( { 'dataset' : dataset, 'history' : manager.history(id) } , default=json_util.default))
+        
 
 
 @view_config(route_name='upload_data', renderer='json')
