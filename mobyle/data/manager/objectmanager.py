@@ -72,7 +72,7 @@ class ObjectManager:
         config = Config.config()
         return config.get("app:main","store")+"/pairtree_root/"
 
-    def delete(self,uid):
+    def delete(self,uid,options={}):
         '''
         Delete a file from storage and database
 
@@ -86,6 +86,13 @@ class ObjectManager:
                 if dataset['path']:
                     obj = ObjectManager.storage.get_object(uid)
                     obj.del_file(uid)
+                    index = ObjectManager.repo.index
+                    index.remove([dataset['path']])
+                    if 'msg' in options:
+                        msg = options['msg']
+                    else:
+                        msg = "File removed"
+                    index.commit(msg+" "+dataset['name'])
         except Exception as e:
             logging.error("Error while trying to delete")
         if dataset is not None:
