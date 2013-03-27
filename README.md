@@ -25,6 +25,7 @@ In case of remote_date file://
  - limit access to a list of root directories
 
 Add revert possibility for files from a previous version of file
+Add user id in history for file history management
 
 # Background tasks
 
