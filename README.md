@@ -40,6 +40,9 @@ Move following attributes to global config instead of ini file
     drop_secret =
 
 
+Analyse possibility to use dulwich instead of gitpython+git
+Analyse possibility to create a repo per file instead of global repo
+
 # Background tasks
 
 Background tasks are manaed with celery.
