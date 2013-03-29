@@ -51,6 +51,7 @@ class ObjectManager:
     storage = None
     # Git repo
     repo = None
+    use_repo = False
 
     QUEUED = 0
     DOWNLOADING = 1
@@ -60,12 +61,20 @@ class ObjectManager:
     def __init__(self):
         config = Config.config()
         logging.error("store = "+str(ObjectManager.storage)+", set to "+config.get("app:main","store"))
+
+        if config.has_option("app:main","use_history"):
+            ObjectManager.use_repo = config.getboolean("app:main","use_history")
+        else:
+            ObjectManager.use_repo = False
+
         if ObjectManager.storage is None:
             config = Config.config()
             f = PairtreeStorageFactory()
             ObjectManager.storage = f.get_store(store_dir=config.get("app:main","store"), uri_base="http://")
             logging.error("store = "+str(config.get("app:main","store")))
-            ObjectManager.repo = Repo.init(self.get_storage_path())
+            if ObjectManager.use_repo:
+                ObjectManager.repo = Repo.init(self.get_storage_path())
+
 
     def get_storage_path(self):
         '''Get path to the storage'''
@@ -86,13 +95,14 @@ class ObjectManager:
                 if dataset['path']:
                     obj = ObjectManager.storage.get_object(uid)
                     obj.del_file(uid)
-                    index = ObjectManager.repo.index
-                    index.remove([dataset['path']])
-                    if 'msg' in options:
-                        msg = options['msg']
-                    else:
-                        msg = "File removed"
-                    index.commit(msg+" "+dataset['name'])
+                    if ObjectManager.use_repo:
+                        index = ObjectManager.repo.index
+                        index.remove([dataset['path']])
+                        if 'msg' in options:
+                            msg = options['msg']
+                        else:
+                            msg = "File removed"
+                        index.commit(msg+" "+dataset['name'])
         except Exception as e:
             logging.error("Error while trying to delete")
         if dataset is not None:
@@ -203,18 +213,21 @@ class ObjectManager:
 
         dataset.save()
 
-        index = ObjectManager.repo.index
-        index.add([dataset['path']])
-        if 'msg' in options:
-            msg = options['msg']
-        else:
-            msg = "Update file content"
-        index.commit(msg+" "+dataset['name'])
+        if ObjectManager.use_repo:
+            index = ObjectManager.repo.index
+            index.add([dataset['path']])
+            if 'msg' in options:
+                msg = options['msg']
+            else:
+                msg = "Update file content"
+            index.commit(msg+" "+dataset['name'])
 
         return dataset['_id']
 
 
     def history(self,id):
+        if not ObjectManager.use_repo:
+            return []
         dataset = connection.FakeData.find_one({ '_id' : ObjectId(id) })
         uid = dataset['uid']
         path = pairtree.id2path(uid)+"/"+uid

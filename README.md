@@ -27,6 +27,19 @@ In case of remote_date file://
 Add revert possibility for files from a previous version of file
 Add user id in history for file history management
 
+Move following attributes to global config instead of ini file
+
+    store = /tmp/data
+    upload_dir = /tmp/ftp
+    site_uri = http://localhost:6543
+    
+    # Manage history on datasets, needs git installed
+    use_history = true
+    
+    drop_key =
+    drop_secret =
+
+
 # Background tasks
 
 Background tasks are manaed with celery.
