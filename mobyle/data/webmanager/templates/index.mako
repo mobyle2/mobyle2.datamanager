@@ -6,11 +6,11 @@
     </blockquote>
     <br>
 
-% if not user['last_name']:
+% if user is None or not user['last_name']:
     <blockquote>
         <h3>Please login first using your API key.</h3><br>
     </blockquote>
-% endif
+% else:
 
     <form id="remotefileupload" action="${request.route_url('upload_remote_data')}" method="POST">
     <legend>Remote dataset</legend>
@@ -32,10 +32,16 @@
     <div class="control-group">
     <label>Data type</label>
     <select name="type">
-      <option value="0">Auto-detect</option>
-      <option value="1">Fasta</option>
+      <option value="sequence">Sequence</option>
     </select>
     <span class="help-block">Type of the data</span>
+    <label>Data format</label>
+    <select name="format">
+      <option value="auto">Auto-detect</option>
+      <option value="fasta">Fasta</option>
+    </select>
+    <span class="help-block">Format of the data</span>
+
     </div>
     <div class="control-group">
     <label>URL</label>
@@ -90,10 +96,15 @@
     <div class="control-group">
     <label>Data type</label>
     <select name="type">
-      <option value="0">Auto-detect</option>
-      <option value="1">Fasta</option>
+      <option value="sequence">Sequence</option>
     </select>
     <span class="help-block">Type of the data</span>
+    <label>Data format</label>
+    <select name="format">
+      <option value="auto">Auto-detect</option>
+      <option value="fasta">Fasta</option>
+    </select>
+    <span class="help-block">Format of the data</span>
     </div>
 
     <div class="control-group">
@@ -156,6 +167,8 @@
         <!-- The table listing the files available for upload/download -->
         <table role="presentation" class="table table-striped"><tbody class="files" data-toggle="modal-gallery" data-target="#modal-gallery"></tbody></table>
     </form>
+
+% endif
     <br>
 </div>
 

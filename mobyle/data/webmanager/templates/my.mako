@@ -15,7 +15,7 @@ DataPluginManager.get_manager()
     </blockquote>
     <br>
  <table class="table">
- <tr><th>Status</th><th>Project</th><th>Name</th><th>Format</th><th>Path</th><th>Size</th><th></th></tr>
+ <tr><th>Status</th><th>Project</th><th>Name</th><th>Type/Format</th><th>Path</th><th>Size</th><th></th></tr>
 % for d in data:
 <%
   actions = ''
@@ -23,8 +23,12 @@ DataPluginManager.get_manager()
   if d['status'] == 0:
     status = '<span class="label">Queued</span>'
   if d['status'] == 1:
-    status = '<span class="label label-info">Downloading</span>'
+    status = '<span class="label">Downloading</span>'
   if d['status'] == 3:
+    status = '<span class="label">Uncompress</span>'
+  if d['status'] == 1:
+    status = '<span class="label">Format checking</span>'
+  if d['status'] == 5:
     status = '<span class="label label-important">Error</span>'
     actions += '<button class="btn btn-info update" data-uid="'+str(d['_id'])+'"><li class="icon-refresh"> </li></button>'
     actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'" data-fileid="'+str(d['uid'])+'"><li class="icon-remove"> </li></button>'
@@ -38,7 +42,7 @@ DataPluginManager.get_manager()
 % if 'project' in d:
   ${d['project']}
 % endif
-</td><td>${d['name']}</td><td>${d['format']}</td><td>${d['path']}</td><td>${d['size']}</td><td>${actions |n}</td></tr>
+</td><td>${d['name']}</td><td>${d['type']}/${d['format']}</td><td>${d['path']}</td><td>${d['size']}</td><td>${actions |n}</td></tr>
 % endfor
 </table>
 </div>

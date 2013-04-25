@@ -7,7 +7,8 @@ from pyftpdlib._compat import PY3, u, unicode, property
 import mobyle.common
 from mobyle.common.connection import connection
 
-from mobyle.data.manager.objectmanager import FakeData, FakeProject
+from mobyle.data.manager.objectmanager import FakeData, FakeProject,
+ObjectManager
 
 from bson import ObjectId
 
@@ -144,10 +145,12 @@ class MobyleFileSystem(AbstractedFS):
         paths = path.split('/')
         filename = paths[2]
         filename = filename.split('_')[0]
-        fakedata = connection.FakeData.find_one( {'uid' : filename})
-        from mobyle.common.config import Config
-        config = Config().config()
-        filename = config.get("app:main","store")+"/pairtree_root/"+fakedata['path']
+        #fakedata = connection.FakeData.find_one( {'uid' : filename})
+        #from mobyle.common.config import Config
+        #config = Config().config()
+        mngr = ObjectManager()
+        filename = mngr.get_file_path(filename)
+        #filename = config.get("app:main","store")+"/pairtree_root/"+fakedata['path']
         return os.path.getmtime(filename)
 
 
@@ -163,10 +166,12 @@ class MobyleFileSystem(AbstractedFS):
         paths = filename.split('/')
         filename = paths[2]
         filename = filename.split('_')[0]
-        fakedata = connection.FakeData.find_one( {'uid' : filename})
-        from mobyle.common.config import Config
-        config = Config().config()
-        filename = config.get("app:main","store")+"/pairtree_root/"+fakedata['path']
+        mngr = ObjectManager()
+        filename = mngr.get_file_path(filename)
+        #fakedata = connection.FakeData.find_one( {'uid' : filename})
+        #from mobyle.common.config import Config
+        #config = Config().config()
+        #filename = config.get("app:main","store")+"/pairtree_root/"+fakedata['path']
         logging.warn("## open "+filename)
         return open(filename, mode)
 
@@ -215,9 +220,11 @@ class MobyleFileSystem(AbstractedFS):
                 else:
                     file = os.path.join(basedir, basename['uid'])
                 try:
-                    from mobyle.common.config import Config
-                    config = Config().config()
-                    st = self.lstat(config.get("app:main","store")+"/pairtree_root/"+basename['path'])
+                    #from mobyle.common.config import Config
+                    #config = Config().config()
+                    #st = self.lstat(config.get("app:main","store")+"/pairtree_root/"+basename['path'])
+                    mngr = ObjectManager()
+                    st = self.lstat(mngr.get_file_path(basename['uid']))
                 except (OSError, FilesystemError):
                     if ignore_err:
                         continue

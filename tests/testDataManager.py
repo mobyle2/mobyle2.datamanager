@@ -50,7 +50,8 @@ class DataManagerTest(unittest.TestCase):
 
 
 	def test_store(self):
-            options = { 'uncompress' : False , 'group' : False, 'type' : 0 }
+            options = { 'uncompress' : False , 'group' : False, 'type' : \
+            'text/plain', 'format' : 'python'  }
             id = self.manager.store('sample.py',__file__,options)
             data = connection.FakeData.find_one({ '_id' : ObjectId(id) })
             self.assertTrue(data is not None)
@@ -58,9 +59,11 @@ class DataManagerTest(unittest.TestCase):
             self.assertTrue(os.path.exists(DataManagerTest.datadir+"/pairtree_root/"+data['path']))
 
 	def test_update(self):
-            id = self.manager.add("sample.py",__file__)
-            self.manager.update(ObjectManager.ERROR,{ "id" : id})
-            data = connection.FakeData.find_one({ '_id' : ObjectId(id) })
+            options = { 'uncompress' : False , 'group' : False, 'type' : \
+            'text/plain', 'format' : 'python' }
+            options['id'] = self.manager.add(__file__, options)
+            self.manager.update(ObjectManager.ERROR, options)
+            data = connection.FakeData.find_one({ '_id' : ObjectId(options['id']) })
             self.assertTrue(data is not None)
             self.assertTrue(data['status']==ObjectManager.ERROR)
             
