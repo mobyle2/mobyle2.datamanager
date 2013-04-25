@@ -8,7 +8,7 @@ import uuid
 import pairtree
 import logging
 import os
-import sys,traceback
+#import sys, traceback
 
 import mobyle.common
 from mobyle.common.connection import connection
@@ -156,7 +156,7 @@ class ObjectManager:
                         index.commit(msg+" "+dataset['name'])
                     else:
                         path = self._get_file_root(uid)
-                        obj.del_file(uid,path)
+                        obj.del_file(uid, path)
         except Exception as e:
             logging.error("Error while trying to delete ")
             #traceback.print_exc(file=sys.stdout)

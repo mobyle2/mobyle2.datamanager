@@ -1,4 +1,4 @@
-from ctypes import *
+from ctypes import cdll, CDLL, RTLD_GLOBAL
 import os
 import logging
 
@@ -48,19 +48,19 @@ class SquizzDetector (object):
                                         ALIFMT_FASTA, ALIFMT_MEGA, ALIFMT_MSF, ALIFMT_NEXUSI, ALIFMT_STOCK,
                                         ALIFMT_NONE ]
 
-    def detect(self,filename):
+    def detect(self, filename):
         '''Detect method'''
         f = libc.fopen(filename, "r")
-        format = libbioseq.sequence_format(f)
-        if format == SEQFMT_NONE:
-            format = libbioali.align_format(f)
+        fformat = libbioseq.sequence_format(f)
+        if fformat == SEQFMT_NONE:
+            fformat = libbioali.align_format(f)
             libc.fclose(f) 
-            if format == ALIFMT_NONE:
+            if fformat == ALIFMT_NONE:
                 return None
-            return SquizzDetector.alignformats[format]
+            return SquizzDetector.alignformats[fformat]
         else:
             libc.fclose(f)
-            return SquizzDetector.seqformats[format]
+            return SquizzDetector.seqformats[fformat]
 
 class BioFormat (object):
     '''Generic detector for an input sequence. Call all registered detectors until one answers'''
@@ -152,50 +152,50 @@ class BioFormat (object):
         '''
         BioFormat.detectors.append(detector)
 
-    def detect_by_extension(self,filename):
+    def detect_by_extension(self, filename):
         '''
         Try to detect the format of the input file based on extension
         :params filename: file to detect
         :type filename: str
         :return: format
         '''
-        name, fileExtension = os.path.splitext(filename)
-        fileExtension = fileExtension.replace('.','')
-        if fileExtension in self.datatypes_by_extension:
-            return self.datatypes_by_extension[fileExtension]
+        name, file_extension = os.path.splitext(filename)
+        file_extension = file_extension.replace('.', '')
+        if file_extension in self.datatypes_by_extension:
+            return self.datatypes_by_extension[file_extension]
         return None
 
 
-    def detect(self,filename):
+    def detect(self, filename):
         '''
         Try to detect the format of the input file
         :params filename: file to detect
         :type filename: str
         :return: tuple (format,mimetype)
         '''
-        format = self.detect_by_extension(filename)
-        if format:
-            return (format,self.mimetypes[format])
+        fformat = self.detect_by_extension(filename)
+        if fformat:
+            return (fformat, self.mimetypes[fformat])
 
         for detector in BioFormat.detectors:
             logging.debug("Try detector "+detector.__name__)
             curdetector = detector()
-            format = curdetector.detect(filename)
-            if format is not None:
+            fformat = curdetector.detect(filename)
+            if fformat is not None:
                 mime = 'application/octet-stream'
-                if format in self.mimetypes:
-                    mime = self.mimetypes[format]
-                return (format,mime)
+                if fformat in self.mimetypes:
+                    mime = self.mimetypes[fformat]
+                return (fformat, mime)
 
-        return (None,None)
+        return (None, None)
 
 
 if __name__ == "__main__":
     if squizz:
         BioFormat.register(SquizzDetector)
     detector = BioFormat()
-    (format,mime) = detector.detect("test.fasta")
-    print("test.fasta: "+str(format)+" : "+str(mime))
-    (format,mime) = detector.detect("test.myfasta")
-    print("test.myfasta: "+str(format)+" : "+str(mime))
+    (fformat, mime) = detector.detect("test.fasta")
+    print("test.fasta: "+str(fformat)+" : "+str(mime))
+    (fformat, mime) = detector.detect("test.myfasta")
+    print("test.myfasta: "+str(fformat)+" : "+str(mime))
 

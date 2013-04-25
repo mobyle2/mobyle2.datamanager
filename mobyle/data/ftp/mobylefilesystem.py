@@ -7,12 +7,12 @@ from pyftpdlib._compat import PY3, u, unicode, property
 import mobyle.common
 from mobyle.common.connection import connection
 
-from mobyle.data.manager.objectmanager import FakeData, FakeProject,
-ObjectManager
+from mobyle.data.manager.objectmanager \
+    import FakeData, FakeProject, ObjectManager
 
 from bson import ObjectId
 
-from pyftpdlib.filesystems import _months_map,FilesystemError
+from pyftpdlib.filesystems import _months_map, FilesystemError
 
 try:
     from stat import filemode as _filemode  # PY 3.3
@@ -36,9 +36,9 @@ class MobyleFileSystem(AbstractedFS):
         self._root = u('/')
 
     def validpath(self, path):
-            # validpath was used to check symlinks escaping user home
-            # directory; this is no longer necessary.
-            return True
+        # validpath was used to check symlinks escaping user home
+        # directory; this is no longer necessary.
+        return True
 
     def chdir(self, path):
         # No change possible for the moment
@@ -71,10 +71,10 @@ class MobyleFileSystem(AbstractedFS):
             # User root
             #if len(elts) == 1:
             if path == '/':
-              return True
+                return True
             # User project
             elif len(elts) == 2:
-              return True
+                return True
             # Next, should check if a sub dataset           
         except Exception:
             return False
@@ -131,7 +131,7 @@ class MobyleFileSystem(AbstractedFS):
         logging.warn("list files "+str(files))
         return files
 
-    def getsize(self,path):
+    def getsize(self, path):
         paths = path.split('/')
         filename = paths[2]
         filename = filename.split('_')[0]
@@ -140,7 +140,7 @@ class MobyleFileSystem(AbstractedFS):
             return fakedata['size']
         return None
 
-    def getmtime(self,path):
+    def getmtime(self, path):
         paths = path.split('/')
         paths = path.split('/')
         filename = paths[2]
@@ -204,21 +204,21 @@ class MobyleFileSystem(AbstractedFS):
         readlink = getattr(self, 'readlink', None)
         now = time.time()
         for basename in listing:
-            if not isinstance(basename,FakeProject):
-                if not PY3:
-                    try:
-                        file = os.path.join(basedir, basename['uid'])
-                    except UnicodeDecodeError:
+            if not isinstance(basename, FakeProject):
+                #if not PY3:
+                #    try:
+                #        file = os.path.join(basedir, basename['uid'])
+                #    except UnicodeDecodeError:
                         # (Python 2 only) might happen on filesystem not
                         # supporting UTF8 meaning os.listdir() returned a list
                         # of mixed bytes and unicode strings:
                         # http://goo.gl/6DLHD
                         # http://bugs.python.org/issue683592
-                        file = os.path.join(bytes(basedir), bytes(basename['uid']))
-                        if not isinstance(basename['uid'], unicode):
-                            basename = unicode(basename, 'utf8')
-                else:
-                    file = os.path.join(basedir, basename['uid'])
+                #        file = os.path.join(bytes(basedir), bytes(basename['uid']))
+                #        if not isinstance(basename['uid'], unicode):
+                #            basename = unicode(basename, 'utf8')
+                #else:
+                #    file = os.path.join(basedir, basename['uid'])
                 try:
                     #from mobyle.common.config import Config
                     #config = Config().config()
