@@ -1,5 +1,6 @@
 from pyftpdlib.authorizers import AuthenticationFailed
 
+import os
 import mobyle.common
 from mobyle.common.connection import connection
 
@@ -10,7 +11,6 @@ class MobyleAuthorizer(object):
 
     read_perms = "elr"
     write_perms = "adfmwM"
-
 
     def validate_authentication(self, username, password, handler):
         """Raises AuthenticationFailed if supplied username and
@@ -23,7 +23,7 @@ class MobyleAuthorizer(object):
             raise AuthenticationFailed(msg)
 
     def has_user(self, username):
-        user = connection.User.find_one({ 'email' : str(username) , 'apikey' : str(password)})
+        user = connection.User.find_one({'email': str(username)})
         if user is not None:
             return True
         else:
@@ -35,7 +35,7 @@ class MobyleAuthorizer(object):
         AuthenticationFailed can be freely raised by subclasses in case
         the provided username no longer exists.
         """
-        user = connection.User.find_one({ 'email' : str(username) })
+        user = connection.User.find_one({'email': str(username) })
         return str(user['_id'])
 
     def impersonate_user(self, username, password):

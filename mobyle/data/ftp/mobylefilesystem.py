@@ -1,18 +1,17 @@
 from  pyftpdlib.filesystems import AbstractedFS
 import os
 import time
-import tempfile
-from pyftpdlib._compat import PY3, u, unicode, property
+from pyftpdlib._compat import PY3, u, unicode
 
 import mobyle.common
 from mobyle.common.connection import connection
+from mobyle.common.project import ProjectData, Project
 
-from mobyle.data.manager.objectmanager import FakeData, FakeProject,
-ObjectManager
+from mobyle.data.manager.objectmanager import ObjectManager
 
 from bson import ObjectId
 
-from pyftpdlib.filesystems import _months_map,FilesystemError
+from pyftpdlib.filesystems import _months_map, FilesystemError
 
 try:
     from stat import filemode as _filemode  # PY 3.3
@@ -20,6 +19,7 @@ except ImportError:
     from tarfile import filemode as _filemode
 
 import logging
+
 
 class MobyleFileSystem(AbstractedFS):
     """Represents the Mobyle filesystem.
@@ -46,8 +46,7 @@ class MobyleFileSystem(AbstractedFS):
         if path == '/':
             path = u(path)
         self._cwd = u(self.fs2ftp(path))
-        logging.warn("chdir to "+self._cwd)
-       
+        logging.warn("chdir to " + self._cwd)
 
     def mkdir(self, path):
         # Not possible
@@ -67,15 +66,15 @@ class MobyleFileSystem(AbstractedFS):
         """If path is a user id, then it is root dir"""
         elts = path.split('/')
         try:
-            user = connection.User.find_one({ '_id' : ObjectId(self._uid) })
+            #user = connection.User.find_one({ '_id' : ObjectId(self._uid) })
             # User root
             #if len(elts) == 1:
             if path == '/':
-              return True
+                return True
             # User project
             elif len(elts) == 2:
-              return True
-            # Next, should check if a sub dataset           
+                return True
+            # Next, should check if a sub dataset
         except Exception:
             return False
         return False
@@ -84,8 +83,8 @@ class MobyleFileSystem(AbstractedFS):
         """"Return an iterator object that yields a directory listing
         in a form suitable for LIST command.
         """
-        logging.warn("cur dir is "+self._cwd)
-        logging.warn("get_list_dir: "+path)
+        logging.debug("cur dir is " + self._cwd)
+        logging.debug("get_list_dir: " + path)
         if self.isdir(path):
             logging.warn("list a directory")
             listing = self.listdir(path)
@@ -101,11 +100,11 @@ class MobyleFileSystem(AbstractedFS):
             return self.format_list(path, listing)
         # if path is a file or a symlink we return information about it
         else:
-            logging.warn("list a file: "+path)
+            logging.debug("list a file: " + path)
             # Should of course get fakedatas of user only
-            fakedata = connection.FakeData.find_one({ 'uid' : path })
-             
-            return self.format_list(path, [fakedata])
+            data = connection.ProjectData.find_one({'_id': ObjectId(path)})
+
+            return self.format_list(path, [data])
 
     def listdir(self, path):
         """List the content ie all fakedatas."""
@@ -113,46 +112,40 @@ class MobyleFileSystem(AbstractedFS):
         files = []
         # Should of course get fakedatas/projects of user only
         elts = path.split('/')
-        logging.warn("listdir: path= "+str(elts))
+        logging.debug("listdir: path= " + str(elts))
         if path == '/':
             # Root dir, list projects
-            projects = connection.FakeProject.find()
+            projects = connection.Project.find({"users": {"$elemMatch": {'user.$id': ObjectId(self._uid)}}})
+            #projects = connection.FakeProject.find()
             for project in projects:
                 files.append(project)
         else:
             project = elts[1].split('_')
-            #TODO fakedata should refer to project ids, not names
-            # Should chech ObjectId(project[0])
-            fakedata = connection.FakeData.find({ 'project' : project[1] })
-            for data in fakedata:
+            projectdata = connection.ProjectData.find({"project": ObjectId(project[0])})
+            #fakedata = connection.ProjectData.find({ 'project' : project[1] })
+            for data in projectdata:
                 #files.append(data['uid'])
-                if 'uid' in data:
-                    files.append(data)
-        logging.warn("list files "+str(files))
+                files.append(data)
+        logging.warn("list files " + str(files))
         return files
 
-    def getsize(self,path):
+    def getsize(self, path):
         paths = path.split('/')
         filename = paths[2]
         filename = filename.split('_')[0]
-        fakedata = connection.FakeData.find_one( {'uid' : filename})
+        fakedata = connection.ProjectData.find_one({'_id': filename})
         if fakedata is not None:
             return fakedata['size']
         return None
 
-    def getmtime(self,path):
+    def getmtime(self, path):
         paths = path.split('/')
         paths = path.split('/')
         filename = paths[2]
         filename = filename.split('_')[0]
-        #fakedata = connection.FakeData.find_one( {'uid' : filename})
-        #from mobyle.common.config import Config
-        #config = Config().config()
         mngr = ObjectManager()
         filename = mngr.get_file_path(filename)
-        #filename = config.get("app:main","store")+"/pairtree_root/"+fakedata['path']
         return os.path.getmtime(filename)
-
 
     def realpath(self, path):
         return path
@@ -162,17 +155,13 @@ class MobyleFileSystem(AbstractedFS):
 
     def open(self, filename, mode):
         """Open a file returning its handler."""
-        logging.warn('open file '+filename)
+        logging.debug('open file ' + filename)
         paths = filename.split('/')
         filename = paths[2]
         filename = filename.split('_')[0]
         mngr = ObjectManager()
         filename = mngr.get_file_path(filename)
-        #fakedata = connection.FakeData.find_one( {'uid' : filename})
-        #from mobyle.common.config import Config
-        #config = Config().config()
-        #filename = config.get("app:main","store")+"/pairtree_root/"+fakedata['path']
-        logging.warn("## open "+filename)
+        logging.debug("## open " + filename)
         return open(filename, mode)
 
     def format_list(self, basedir, listing, ignore_err=True):
@@ -201,51 +190,34 @@ class MobyleFileSystem(AbstractedFS):
         else:
             timefunc = time.localtime
         SIX_MONTHS = 180 * 24 * 60 * 60
-        readlink = getattr(self, 'readlink', None)
+        #readlink = getattr(self, 'readlink', None)
         now = time.time()
         for basename in listing:
-            if not isinstance(basename,FakeProject):
-                if not PY3:
-                    try:
-                        file = os.path.join(basedir, basename['uid'])
-                    except UnicodeDecodeError:
-                        # (Python 2 only) might happen on filesystem not
-                        # supporting UTF8 meaning os.listdir() returned a list
-                        # of mixed bytes and unicode strings:
-                        # http://goo.gl/6DLHD
-                        # http://bugs.python.org/issue683592
-                        file = os.path.join(bytes(basedir), bytes(basename['uid']))
-                        if not isinstance(basename['uid'], unicode):
-                            basename = unicode(basename, 'utf8')
-                else:
-                    file = os.path.join(basedir, basename['uid'])
+            if not isinstance(basename, Project):
                 try:
-                    #from mobyle.common.config import Config
-                    #config = Config().config()
-                    #st = self.lstat(config.get("app:main","store")+"/pairtree_root/"+basename['path'])
                     mngr = ObjectManager()
-                    st = self.lstat(mngr.get_file_path(basename['uid']))
+                    st = self.lstat(mngr.get_file_path(str(basename['_id'])))
                 except (OSError, FilesystemError):
                     if ignore_err:
                         continue
                     raise
-                size = basename['size']  # file size
+                size = basename['data']['size']  # file size
                 perms = _filemode(st.st_mode)  # permissions
             else:
                 # This is a project, fake a directory
                 size = 0
                 st = self.lstat(os.path.realpath(__file__))
-                basename['uid'] = str(basename['_id'])
+                basename['_id'] = str(basename['_id'])
                 perms = "drwxrwxrwx"
             nlinks = st.st_nlink  # number of links to inode
             if not nlinks:  # non-posix system, let's use a bogus value
                 nlinks = 1
             size = st.st_size  # file size
             mtime = timefunc(st.st_mtime)
-            
+
             uname = "mobyle"
             gname = "mobyle"
-            
+
             # if modification time > 6 months shows "month year"
             # else "month hh:mm";  this matches proftpd format, see:
             # http://code.google.com/p/pyftpdlib/issues/detail?id=187
@@ -265,9 +237,8 @@ class MobyleFileSystem(AbstractedFS):
                                       time.strftime("%d %H:%M", mtime))
 
             # formatting is matched with proftpd ls output
-            #line = "%s %s %-8s %-8s %8s %s %s\r\n" % (perms, basename['name'], uname, gname,
-            #                                           size, mtimestr, basename['uid'])
-            line = "%s %3s %-8s %-8s %8s %s %s\r\n" % (perms, nlinks, uname, gname,
-                                                       size, mtimestr, basename['uid']+"_"+basename['name'])
-            logging.warn("out list: "+line)
+            line = "%s %3s %-8s %-8s %8s %s %s\r\n" % \
+                (perms, nlinks, uname, gname, size, mtimestr,
+                    str(basename['_id']) + "_" + basename['name'])
+            logging.debug("out list: " + line)
             yield line.encode('utf8', self.cmd_channel.unicode_errors)
