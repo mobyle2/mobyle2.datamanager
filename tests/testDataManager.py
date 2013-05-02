@@ -83,5 +83,11 @@ class DataManagerTest(unittest.TestCase):
                 # Nothing found, this is fine
                 pass
 
+        def test_isarchive(self):
+            self.assertTrue(self.manager.isarchive('test.zip') is not None)
+            self.assertTrue(self.manager.isarchive('test.tar.gz') is not None)
+            self.assertTrue(self.manager.isarchive('test.bz2') is not None)
+            self.assertTrue(self.manager.isarchive('test.txt') is None)
+
 
 
