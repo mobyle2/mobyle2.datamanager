@@ -4,7 +4,7 @@ This module manages object storage
 from pairtree import PairtreeStorageFactory
 
 import re
-import uuid
+#import uuid
 import pairtree
 import logging
 import os
@@ -38,7 +38,6 @@ from mobyle.data.tools.detector import BioFormat
 #    'status': int, 'size': int, 'project': basestring, 'format': basestring,
 #    'type': basestring }
 #    default_values = {'format': 'txt'}
-
 
 
 class ObjectManager:
@@ -123,8 +122,7 @@ class ObjectManager:
         return ObjectManager.get_storage_path() + pairtree.id2path(uid) + \
             "/" + ObjectManager._get_file_root(uid) + "/" + uid
 
-
-    def _delete_file(self,uid, options=None):
+    def _delete_file(self, uid, options=None):
         '''
         Delete file from storage directly or via repo
         '''
@@ -167,8 +165,9 @@ class ObjectManager:
                 else:
                     for value in dataset['data']['value']:
                         if 'path' in value:
-                            options['name'] = os.path.basename(value['path'])
-                            self._delete_file(os.path.basename(value['path']), options)
+                            fpath = os.path.basename(value['path'])
+                            options['name'] = fpath
+                            self._delete_file(fpath, options)
         except Exception:
             logging.error("Error while trying to delete ")
             #traceback.print_exc(file=sys.stdout)
@@ -373,14 +372,16 @@ class ObjectManager:
 
         dataset['name'] = name
         #dataset['uid'] = uid
-        dataset['data']['path'] = pairtree.id2path(uid) + "/" + self._get_file_root(uid) + "/"+uid
+        dataset['data']['path'] = pairtree.id2path(uid) +\
+                                "/" + self._get_file_root(uid) + "/" + uid
         dataset['status'] = ObjectManager.DOWNLOADED
         if options['uncompress'] and self.isarchive(name) is not None:
             dataset['status'] = ObjectManager.UNCOMPRESS
             options['original_format'] = options['format']
             options['format'] = 'archive'
 
-        dataset['data']['size'] = os.path.getsize(self.get_storage_path() + dataset['data']['path'])
+        dataset['data']['size'] = os.path.getsize(self.get_storage_path() +
+                                                    dataset['data']['path'])
         if 'project' in options:
             dataset['project'] = ObjectId(options['project'])
 
@@ -389,7 +390,8 @@ class ObjectManager:
             detector = BioFormat()
             fformat = detector.detect_by_extension(dataset['name'])
             if fformat is None:
-                (fformat, mime) = detector.detect(self.get_storage_path() + dataset['data']['path'])
+                (fformat, mime) = detector.detect(self.get_storage_path() +
+                                                    dataset['data']['path'])
         else:
             fformat = options['format']
 
