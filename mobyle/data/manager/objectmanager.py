@@ -206,7 +206,7 @@ class ObjectManager:
 
         :param filepath: path of the file
         :type filepath: str
-        :return: True if match a known/supported archive type
+        :return: None if don't match a known/supported archive type
         '''
         filetypes = re.compile('\.(tar\.gz|bz2|zip)')
         return filetypes.search(filepath)
