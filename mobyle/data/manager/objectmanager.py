@@ -187,7 +187,7 @@ class ObjectManager:
         :return: data database id
         '''
         if options is None:
-            options = {}
+            options = {'uncompress': False}
         Config.config()
         #uid = uuid.uuid4().hex
         dataset = connection.ProjectData()

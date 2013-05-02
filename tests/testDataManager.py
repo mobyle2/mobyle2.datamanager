@@ -41,7 +41,7 @@ class DataManagerTest(unittest.TestCase):
                 data.delete()
 
         def test_add(self):
-            fid = self.manager.add("sample.py", _file__)
+            fid = self.manager.add("sample.py")
             data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
             self.assertTrue(data is not None)
             self.assertTrue(data['status'] == ObjectManager.QUEUED)
@@ -53,7 +53,8 @@ class DataManagerTest(unittest.TestCase):
             data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
             self.assertTrue(data is not None)
             self.assertTrue(data['status'] == ObjectManager.DOWNLOADED)
-            self.assertTrue(os.path.exists(DataManagerTest.datadir + "/pairtree_root/" + data['path']))
+            self.assertTrue(os.path.exists(DataManagerTest.datadir +
+                            "/pairtree_root/" + data['data']['path']))
 
         def test_update(self):
             options = {'uncompress': False, 'group': False, 'type':
@@ -63,5 +64,24 @@ class DataManagerTest(unittest.TestCase):
             data = connection.ProjectData.find_one({'_id': ObjectId(options['id'])})
             self.assertTrue(data is not None)
             self.assertTrue(data['status'] == ObjectManager.ERROR)
+
+        def test_delete(self):
+            options = {'uncompress': False, 'group': False, 'type':
+            'text/plain', 'format': 'python'}
+            fid = self.manager.store('sample.py', __file__, options)
+            data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
+            self.assertTrue(data['status'] == ObjectManager.DOWNLOADED)
+            self.assertTrue(os.path.exists(DataManagerTest.datadir +
+                            "/pairtree_root/" + data['data']['path']))
+            self.manager.delete(fid, options)
+            self.assertFalse(os.path.exists(DataManagerTest.datadir +
+                            "/pairtree_root/" + data['data']['path']))
+            try:
+                data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
+                self.fail("Data should have been deleted")
+            except Exception:
+                # Nothing found, this is fine
+                pass
+
 
 
