@@ -10,6 +10,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 from yapsy.PluginManager import PluginManager
 
+
 class DataPluginManager:
     '''
     This class manages the plugins for the datamanager. It loads the plugins
@@ -19,7 +20,6 @@ class DataPluginManager:
     manager = None
     supported_protocols = {}
 
-
     @staticmethod
     def get_manager():
         '''
@@ -27,8 +27,8 @@ class DataPluginManager:
         '''
         if DataPluginManager.manager is None:
             DataPluginManager.manager = PluginManager()
-            DataPluginManager.manager.setPluginPlaces( \
-                [os.path.dirname(os.path.realpath(__file__))+'/plugins'])
+            DataPluginManager.manager.setPluginPlaces(
+                [os.path.dirname(os.path.realpath(__file__)) + '/plugins'])
             # Load all plugins
             DataPluginManager.manager.collectPlugins()
 

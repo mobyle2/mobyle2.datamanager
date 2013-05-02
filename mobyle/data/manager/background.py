@@ -15,9 +15,8 @@ from  mobyle.data.manager.pluginmanager import DataPluginManager
 
 # Initial setup
 CONF = Config.config()
-Celery('tasks', broker=CONF.get('app:main', 'db_uri')+ \
-        '/'+CONF.get('app:main', 'db_name')+'/')
-
+Celery('tasks', broker=CONF.get('app:main', 'db_uri') +
+        '/' + CONF.get('app:main', 'db_name') + '/')
 
 
 @task
@@ -32,7 +31,7 @@ def upload(furl, options=None):
     '''
     if options is None:
         options = {}
-    logging.info("Upload in background file "+options['name']+':'+furl)
+    logging.info("Upload in background file " + options['name'] + ':' + furl)
     # For init
     ObjectManager()
     data_plugin_manager = DataPluginManager.get_manager()
@@ -54,15 +53,16 @@ def download(furl, options=None):
     '''
     if options is None:
         options = {}
-    logging.error("Download in background file "+str(options['protocol'])+':'+furl)
+    logging.info("Download in background file " +
+                str(options['protocol']) + ':' + furl)
     mngr = ObjectManager()
     mngr.update(ObjectManager.DOWNLOADING, options)
 
     data_plugin_manager = DataPluginManager.get_manager()
-    
+
     try:
-        if options['protocol'] in ['http://','ftp://']:
-            f = urllib2.urlopen(options['protocol']+furl)
+        if options['protocol'] in ['http://', 'ftp://']:
+            f = urllib2.urlopen(options['protocol'] + furl)
             (out, file_path) = tempfile.mkstemp()
             output_file = open(file_path, 'wb')
             output_file.write(f.read())
@@ -73,16 +73,17 @@ def download(furl, options=None):
             # Use plugins
             plugin = data_plugin_manager.getPluginByName(options['protocol'])
             drop = plugin.plugin_object
-            file_path =  drop.download(furl, options)
+            file_path = drop.download(furl, options)
             options['file'] = file_path
             mngr.update(ObjectManager.DOWNLOADED, options)
             os.remove(file_path)
         else:
-            logging.error("no matching protocol: "+str(options['protocol']))
-            mngr.update(ObjectManager.ERROR, options)           
+            logging.error("no matching protocol: " + str(options['protocol']))
+            mngr.update(ObjectManager.ERROR, options)
     except Exception as e:
-        logging.error("Download error: "+str(e))
+        logging.error("Download error: " + str(e))
         mngr.update(ObjectManager.ERROR, options)
+
 
 @task
 def uncompress(f, options=None):
@@ -102,7 +103,7 @@ def uncompress(f, options=None):
     dir_path = tempfile.mkdtemp()
 
     if is_zipfile(f):
-        myzip = ZipFile(f,'r')
+        myzip = ZipFile(f, 'r')
         myzip.extractall(dir_path)
         myzip.close()
     else:
@@ -113,4 +114,22 @@ def uncompress(f, options=None):
     for root, dirnames, filenames in os.walk(dir_path):
         for filename in filenames:
             options['files'].append(os.path.join(dir_path, filename))
-    mngr.update(ObjectManager.UNCOMPRESSED, options)
+    try:
+        mngr.update(ObjectManager.UNCOMPRESSED, options)
+    except Exception:
+        mngr.update(ObjectManager.ERROR, options)
+
+
+@task
+def compress(path, options=None):
+    '''Compress a set of files for download
+
+    :param path: Path to the files to be compressed
+    :type path: string
+    :param options: List of options, needs param "out" to specify zip out file
+    :type options: dict
+    '''
+    with ZipFile(options['out'], 'w') as myzip:
+        for root, dirnames, filenames in os.walk(path):
+            for filename in filenames:
+                myzip.write(os.path.join(path, filename))
