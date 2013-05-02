@@ -20,9 +20,9 @@ Root url is http://localhost:6543/data-manager
 ## TODO
 
 FTP:
-  manage complex objects
+  manage complex objects (ListData and StructData)
 
-In case of remote_date file://
+In case of remote_upload file://
  - check if allowed in configuration
  - only only local registered users (ldap)
  - limit access to a list of root directories
