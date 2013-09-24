@@ -9,7 +9,7 @@ from pyramid.view import  render_view_to_response
 
 import json
 import urllib
-import bcrypt
+#import bcrypt
 import re
 import logging
 import os
