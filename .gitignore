@@ -5,3 +5,4 @@
 *\.pyo
 tests/data
 tidesdk.ini
+docs/build
