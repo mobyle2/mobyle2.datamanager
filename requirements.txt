@@ -16,3 +16,4 @@ mongokit
 pyftpdlib
 gitpython
 yapsy
+git+https://github.com/mobyle2/mobyle2.lib.git@develop#egg=mobyle2.lib
