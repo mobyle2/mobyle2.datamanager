@@ -3,11 +3,8 @@ import unittest
 
 from pyramid import testing
 
-import pymongo
-import copy
 import os
 
-import logging
 
 from bson.objectid import ObjectId
 
@@ -22,7 +19,9 @@ base_url = "http://localhost:6543"
 
 import mobyle.data.manager
 import mobyle.data.manager.objectmanager
-from mobyle.data.manager.objectmanager import ObjectManager,FakeData
+from mobyle.data.manager.objectmanager import ObjectManager
+from mobyle.common.project import ProjectData
+
 
 class DataManagerTest(unittest.TestCase):
 
@@ -34,34 +33,61 @@ class DataManagerTest(unittest.TestCase):
             config = Config().config()
             dirname, filename = os.path.split(os.path.abspath(__file__))
             DataManagerTest.datadir = dirname + "/data"
-            config.set("app:main","store",DataManagerTest.datadir)
+            config.set("app:main", "store", DataManagerTest.datadir)
             ObjectManager.storage = None
             self.manager = ObjectManager()
-            datasets = connection.FakeData.find()
+            datasets = connection.ProjectData.find()
             for data in datasets:
                 data.delete()
 
-
         def test_add(self):
-            id = self.manager.add("sample.py",__file__)
-            data = connection.FakeData.find_one({ '_id' : ObjectId(id) }) 
+            fid = self.manager.add("sample.py")
+            data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
             self.assertTrue(data is not None)
-            self.assertTrue(data['status']==ObjectManager.QUEUED)
+            self.assertTrue(data['status'] == ObjectManager.QUEUED)
+
+        def test_store(self):
+            options = {'uncompress': False, 'group': False, 'type':
+            'text/plain', 'format': 'python'}
+            fid = self.manager.store('sample.py', __file__, options)
+            data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
+            self.assertTrue(data is not None)
+            self.assertTrue(data['status'] == ObjectManager.DOWNLOADED)
+            self.assertTrue(os.path.exists(DataManagerTest.datadir +
+                            "/pairtree_root/" + data['data']['path']))
+
+        def test_update(self):
+            options = {'uncompress': False, 'group': False, 'type':
+            'text/plain', 'format': 'python'}
+            options['id'] = self.manager.add(__file__, options)
+            self.manager.update(ObjectManager.ERROR, options)
+            data = connection.ProjectData.find_one({'_id': ObjectId(options['id'])})
+            self.assertTrue(data is not None)
+            self.assertTrue(data['status'] == ObjectManager.ERROR)
+
+        def test_delete(self):
+            options = {'uncompress': False, 'group': False, 'type':
+            'text/plain', 'format': 'python'}
+            fid = self.manager.store('sample.py', __file__, options)
+            data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
+            self.assertTrue(data['status'] == ObjectManager.DOWNLOADED)
+            self.assertTrue(os.path.exists(DataManagerTest.datadir +
+                            "/pairtree_root/" + data['data']['path']))
+            self.manager.delete(fid, options)
+            self.assertFalse(os.path.exists(DataManagerTest.datadir +
+                            "/pairtree_root/" + data['data']['path']))
+            try:
+                data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
+                self.fail("Data should have been deleted")
+            except Exception:
+                # Nothing found, this is fine
+                pass
+
+        def test_isarchive(self):
+            self.assertTrue(self.manager.isarchive('test.zip') is not None)
+            self.assertTrue(self.manager.isarchive('test.tar.gz') is not None)
+            self.assertTrue(self.manager.isarchive('test.bz2') is not None)
+            self.assertTrue(self.manager.isarchive('test.txt') is None)
 
 
-	def test_store(self):
-            options = { 'uncompress' : False , 'group' : False, 'type' : 0 }
-            id = self.manager.store('sample.py',__file__,options)
-            data = connection.FakeData.find_one({ '_id' : ObjectId(id) })
-            self.assertTrue(data is not None)
-            self.assertTrue(data['status']==ObjectManager.DOWNLOADED)
-            self.assertTrue(os.path.exists(DataManagerTest.datadir+"/pairtree_root/"+data['path']))
-
-	def test_update(self):
-            id = self.manager.add("sample.py",__file__)
-            self.manager.update(ObjectManager.ERROR,{ "id" : id})
-            data = connection.FakeData.find_one({ '_id' : ObjectId(id) })
-            self.assertTrue(data is not None)
-            self.assertTrue(data['status']==ObjectManager.ERROR)
-            
 

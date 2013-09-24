@@ -19,7 +19,10 @@ Root url is http://localhost:6543/data-manager
 
 ## TODO
 
-In case of remote_date file://
+FTP:
+  manage complex objects (ListData and StructData)
+
+In case of remote_upload file://
  - check if allowed in configuration
  - only only local registered users (ldap)
  - limit access to a list of root directories
@@ -41,7 +44,6 @@ Move following attributes to global config instead of ini file
 
 
 Analyse possibility to use dulwich instead of gitpython+git
-Analyse possibility to create a repo per file instead of global repo
 
 # Background tasks
 

@@ -105,7 +105,7 @@ $('.datasetmodal').click(function(e) {
 		}
 		if('value' in data['dataset']['data'] && $.isArray(data['dataset']['data']['value'])) {
 			// This is a ListData
-			infoHtml+="<div><h3>Files</h3>";
+			infoHtml+="<div><h3>Files<h3>";
 			$.each(data['dataset']['data']['value'], function(key,value) {
 				if('path' in value) {
 					infoHtml+="<div>" + basename(value['path']) + "</div>";

@@ -18,7 +18,7 @@
     <label>Project</label>
     <select name="project">
     % for project in user['projects']:
-        <option value="${project['id']}">${project['name']}</option>
+        <option>${project}</option>
     % endfor
     </select>
     </div>
@@ -89,7 +89,7 @@
     <label>Project</label>
     <select name="project">
     % for project in user['projects']:
-        <option value="${project['id']}">${project['name']}</option>
+        <option>${project}</option>
     % endfor
     </select>
     </div>
