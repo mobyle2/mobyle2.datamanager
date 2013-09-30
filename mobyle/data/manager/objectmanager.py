@@ -245,7 +245,7 @@ class ObjectManager:
 
         if status == ObjectManager.DOWNLOADED or \
              status == ObjectManager.UNCOMPRESSED or \
-             status == ObjectManager.SYMLINK
+             status == ObjectManager.SYMLINK:
             # Data is downloaded and eventually uncompressed
             Config.config()
             uid = str(dataset['_id'])
@@ -308,12 +308,15 @@ class ObjectManager:
                     pairtree.id2path(uid) + "/" + \
                     self._get_file_root(uid) + "/" + uid
 
-                if status == SYMLINK:
+                if status == ObjectManager.SYMLINK:
                     # Not taken into account for quota
                     dataset['data']['size'] = 0
-                    os.symlink(self.get_storage_path() +
-                                dataset['data']['path'],
-                                options['name'])
+                    dirname = os.path.dirname(os.path.join(self.get_storage_path(),dataset['data']['path']))
+                    if not os.path.exists(dirname):
+                        os.mkdir(dirname)
+                    os.symlink(options['file'],
+                                self.get_storage_path() +
+                                dataset['data']['path'])
                 else:
                     with open(options['file'], 'rb') as stream:
                         obj.add_bytestream(uid, stream, path)

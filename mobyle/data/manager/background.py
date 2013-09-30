@@ -11,6 +11,9 @@ from mobyle.common.config import Config
 from mobyle.data.manager.objectmanager import ObjectManager
 
 from  mobyle.data.manager.pluginmanager import DataPluginManager
+from mobyle.common.connection import connection
+
+from bson.objectid import ObjectId
 
 
 # Initial setup
@@ -54,7 +57,7 @@ def download(furl, options=None):
     if options is None:
         options = {}
     logging.info("Download in background file " +
-                str(options['protocol']) + ':' + furl)
+                str(options['protocol']) + furl)
     mngr = ObjectManager()
     mngr.update(ObjectManager.DOWNLOADING, options)
 
@@ -77,7 +80,7 @@ def download(furl, options=None):
                                             ObjectId(options['user_id'])})
             file_path = os.path.join(user['home_dir'],furl)
             # Only copy from user home directory
-            if user_home and \
+            if user['home_dir'] and \
             os.path.realpath(file_path).startswith(user['home_dir']):
                 # Do the copy or symlink
                 if options['protocol'] == 'symlink://':

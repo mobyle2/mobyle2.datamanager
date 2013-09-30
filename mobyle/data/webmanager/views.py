@@ -32,17 +32,23 @@ from mobyle.data.manager.background import download, upload
 
 from  mobyle.data.manager.pluginmanager import DataPluginManager
 
+_BASE_PROTOCOLS = None
 
-BASE_PROTOCOLS = []
-mob_config = MobyleConfig.get_current()
-allowed_protocols = mob_config['data']['remote']['allowed_protocols']
-if allowed_protocols:
-    allowed_list = allowed_protocols.split(",")
-    for protocol in allowed_list:
-        BASE_PROTOCOLS.append(protocol.strip()+"://")
-if mob_config['data']['local']['allowed_copy']:
-    BASE_PROTOCOLS.append('file://')
-    BASE_PROTOCOLS.append('symlink://')
+def get_protocols():
+    """Return the list of allowed protocols"""
+    if _BASE_PROTOCOLS is not None:
+        return _BASE_PROTOCOLS
+    _BASE_PROTOCOLS = []
+    mob_config = MobyleConfig.get_current()
+    allowed_protocols = mob_config['data']['remote']['allowed_protocols']
+    if allowed_protocols:
+        allowed_list = allowed_protocols.split(",")
+        for protocol in allowed_list:
+            _BASE_PROTOCOLS.append(protocol.strip()+"://")
+    if mob_config['data']['local']['allowed_copy']:
+        _BASE_PROTOCOLS.append('file://')
+        _BASE_PROTOCOLS.append('symlink://')
+    return _BASE_PROTOCOLS
 
 
 
@@ -181,7 +187,7 @@ def login(request):
     except Exception as e:
         logging.error("error with projects: " + str(e))
         user['projects'] = projects
-    return {'user': user, 'protocols': BASE_PROTOCOLS}
+    return {'user': user, 'protocols': get_protocols()}
 
 
 def get_user(request):
@@ -214,7 +220,7 @@ def my_view(request):
         uid = request.params.getone('id')
     except Exception:
         uid = None
-    return {'user': get_user(request), 'uid': uid, 'protocols': BASE_PROTOCOLS}
+    return {'user': get_user(request), 'uid': uid, 'protocols': get_protocols()}
 
 
 @view_config(route_name='upload_remote_data', renderer='mobyle.data.webmanager:templates/index.mako')
@@ -256,7 +262,7 @@ def upload_remote_data(request):
 
     # Try to protect against unexpected protocols
     if options['protocol'] not in DataPluginManager.supported_protocols and \
-        options['protocol'] not in BASE_PROTOCOLS:
+        options['protocol'] not in get_protocols():
 
         request.session.flash("Protocol not supported")
         return {'user': get_user(request)}
@@ -285,7 +291,7 @@ def upload_remote_data(request):
 
     # If http,ftp,scp i.e. base protocols, do not check plugins
     if options['protocol'] is not None and \
-        options['protocol'] not in BASE_PROTOCOLS:
+        options['protocol'] not in get_protocols():
 
         plugin = data_plugin_manager.getPluginByName(options['protocol'])
         if plugin is None:
@@ -299,13 +305,13 @@ def upload_remote_data(request):
          # Store session objects necessary for plugins
         options = drop.set_options(request.session, options)
 
-     httpsession = request.session
-     if "_id" in httpsession:
+    httpsession = request.session
+    if "_id" in httpsession:
         options['user_id'] = httpsession['_id']
 
     download.delay(options['rurl'], options)
     request.session.flash('File download request in progress')
-    return {'user': get_user(request), 'protocols': BASE_PROTOCOLS}
+    return {'user': get_user(request), 'protocols': get_protocols()}
 
 
 @view_config(route_name='data', renderer='json')

@@ -160,4 +160,6 @@ class DataManagerTest(unittest.TestCase):
             data = connection.ProjectData.find_one({'_id': ObjectId(options['id'])})
             self.assertTrue(os.path.exists(DataManagerTest.datadir +
                             "/pairtree_root/" + data['data']['path']))
+            print "OSALLOU "+data['data']['path']
+            self.assertTrue(1==0)
 
