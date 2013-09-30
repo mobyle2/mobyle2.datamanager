@@ -20,6 +20,7 @@ from bson import json_util
 
 import mobyle.common
 from mobyle.common.connection import connection
+from mobyle.common.mobyleConfig import MobyleConfig
 #import mobyle.data.manager.objectmanager
 from mobyle.data.manager.objectmanager import ObjectManager
 #from mobyle.common.project import ProjectData
@@ -32,7 +33,17 @@ from mobyle.data.manager.background import download, upload
 from  mobyle.data.manager.pluginmanager import DataPluginManager
 
 
-BASE_PROTOCOLS = ['http://', 'ftp://', 'scp://']
+BASE_PROTOCOLS = []
+mob_config = MobyleConfig.get_current()
+allowed_protocols = mob_config['data']['remote']['allowed_protocols']
+if allowed_protocols:
+    allowed_list = allowed_protocols.split(",")
+    for protocol in allowed_list:
+        BASE_PROTOCOLS.append(protocol.strip()+"://")
+if mob_config['data']['local']['allowed_copy']:
+    BASE_PROTOCOLS.append('file://')
+    BASE_PROTOCOLS.append('symlink://')
+
 
 
 @view_config(route_name='data_plugin_upload')
@@ -140,7 +151,8 @@ def logout(request):
     httpsession = request.session
     if "_id" in httpsession:
         del httpsession['_id']
-    user = {'last_name': None, 'first_name': None, 'apikey': None, 'projects': []}
+    user = {'last_name': None, 'first_name': None, 'apikey': None, 'projects':
+    []}
     return {'user': user}
 
 
@@ -169,7 +181,7 @@ def login(request):
     except Exception as e:
         logging.error("error with projects: " + str(e))
         user['projects'] = projects
-    return {'user': user}
+    return {'user': user, 'protocols': BASE_PROTOCOLS}
 
 
 def get_user(request):
@@ -202,7 +214,7 @@ def my_view(request):
         uid = request.params.getone('id')
     except Exception:
         uid = None
-    return {'user': get_user(request), 'uid': uid}
+    return {'user': get_user(request), 'uid': uid, 'protocols': BASE_PROTOCOLS}
 
 
 @view_config(route_name='upload_remote_data', renderer='mobyle.data.webmanager:templates/index.mako')
@@ -283,14 +295,17 @@ def upload_remote_data(request):
         if not authorized:
             request.session.flash(msg)
             values = my_view(request)
-            return render_to_response('mobyle.data.webmanager:templates/index.mako',
-                values, request=request)
+            return render_to_response('mobyle.data.webmanager:templates/index.mako', values, request=request)
          # Store session objects necessary for plugins
         options = drop.set_options(request.session, options)
 
+     httpsession = request.session
+     if "_id" in httpsession:
+        options['user_id'] = httpsession['_id']
+
     download.delay(options['rurl'], options)
     request.session.flash('File download request in progress')
-    return {'user': get_user(request)}
+    return {'user': get_user(request), 'protocols': BASE_PROTOCOLS}
 
 
 @view_config(route_name='data', renderer='json')

@@ -60,6 +60,7 @@ class ObjectManager:
     FORMATCHECKING = 4
     ERROR = 5
     UNCOMPRESSED = 6
+    SYMLINK = 7
 
     FILEROOT = 'data'
 
@@ -156,6 +157,9 @@ class ObjectManager:
         try:
             dataset = connection.ProjectData.find_one({"_id": ObjectId(uid)})
             if dataset is not None:
+                if 'path' in dataset and dataset['path']:
+                    dataset.delete()
+                    return
                 #TODO: manage removal of List or Struct data types
                 # we should be able to detect from _type, bu not for the moment
                 # This is a RefData
@@ -175,14 +179,20 @@ class ObjectManager:
             dataset.delete()
 
     @classmethod
-    def add(cls, name, options=None):
+    def add(cls, name, options=None, persistent=True):
         '''
         Adds a new dataset in status queued
 
         :param name: name fo the file
         :type name: str
         :param options: options related to file (project,...)
-        :type options: dict
+        :type options: dict with
+            
+            name: name of the file
+            status: ObjectManager status
+            project: id of the project
+            path (optional): path the data, data is not stored in pairtree.
+
         :return: data database id
         '''
         if options is None:
@@ -193,6 +203,9 @@ class ObjectManager:
         dataset['data'] = RefData()
         dataset['name'] = name
         dataset['status'] = ObjectManager.QUEUED
+        if 'path' in options:
+            dataset['path'] = options['path']
+        dataset['persistent'] = persistent
         if 'project' in options:
             dataset['project'] = ObjectId(options['project'])
         dataset.save()
@@ -227,8 +240,12 @@ class ObjectManager:
         self.isarchive(options['name']):
             status = ObjectManager.UNCOMPRESS
 
+        if status == ObjectManager.SYMLINK:
+            options['uncompress'] = False
+
         if status == ObjectManager.DOWNLOADED or \
-             status == ObjectManager.UNCOMPRESSED:
+             status == ObjectManager.UNCOMPRESSED or \
+             status == ObjectManager.SYMLINK
             # Data is downloaded and eventually uncompressed
             Config.config()
             uid = str(dataset['_id'])
@@ -291,11 +308,19 @@ class ObjectManager:
                     pairtree.id2path(uid) + "/" + \
                     self._get_file_root(uid) + "/" + uid
 
-                with open(options['file'], 'rb') as stream:
-                    obj.add_bytestream(uid, stream, path)
-                dataset['data']['size'] = \
-                    os.path.getsize(self.get_storage_path() +
-                    dataset['data']['path'])
+                if status == SYMLINK:
+                    # Not taken into account for quota
+                    dataset['data']['size'] = 0
+                    os.symlink(self.get_storage_path() +
+                                dataset['data']['path'],
+                                options['name'])
+                else:
+                    with open(options['file'], 'rb') as stream:
+                        obj.add_bytestream(uid, stream, path)
+                    dataset['data']['size'] = \
+                        os.path.getsize(self.get_storage_path() +
+                        dataset['data']['path'])
+
                 dataset['data']['type'] = options['type']
 
                 if ObjectManager.use_repo:

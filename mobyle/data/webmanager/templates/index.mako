@@ -46,10 +46,11 @@
     <div class="control-group">
     <label>URL</label>
     <select name="protocol">
-        <option value="http://">http://</option>
-        <option value="ftp://">ftp://</option>
-        <option value="scp">scp</option>
-        <option value="symlink">symlink</option>
+      % if protocols:
+        % for protocol in protocols:
+            <option value="${protocol}">${protocol}</option>
+        % endfor
+      % endif
     <%
        from mobyle.data.manager.pluginmanager import DataPluginManager
        DataPluginManager.get_manager()
@@ -60,7 +61,7 @@
 
     </select>
     <input type="text" name="rurl" value=""/>
-    <span class="help-block">URL of remote element (http,ftp,cp). Must be readable as anonymous.</span>
+    <span class="help-block">URL of remote element (http,ftp ...). Must be readable as anonymous.</span>
     </div>
     <div class="control-group">
     <label class="checkbox">

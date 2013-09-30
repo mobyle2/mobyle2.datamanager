@@ -69,6 +69,26 @@ def download(furl, options=None):
             options['file'] = file_path
             mngr.update(ObjectManager.DOWNLOADED, options)
             os.remove(file_path)
+        elif options['protocol'] in ['file://', 'symlink://']:
+            if 'user_id' not in options:
+                logging.error('no user id for file/symlink task')
+                return
+            user = connection.User.find_one({'_id':
+                                            ObjectId(options['user_id'])})
+            file_path = os.path.join(user['home_dir'],furl)
+            # Only copy from user home directory
+            if user_home and \
+            os.path.realpath(file_path).startswith(user['home_dir']):
+                # Do the copy or symlink
+                if options['protocol'] == 'symlink://':
+                    # symlink
+                    options['file'] =  file_path
+                    mngr.update(ObjectManager.SYMLINK, options)
+                else:
+                    # copy
+                    options['file'] =  file_path
+                    mngr.update(ObjectManager.DOWNLOADED, options)
+
         elif options['protocol'] in DataPluginManager.supported_protocols:
             # Use plugins
             plugin = data_plugin_manager.getPluginByName(options['protocol'])
