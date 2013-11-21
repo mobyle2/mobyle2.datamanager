@@ -39,6 +39,10 @@ from mobyle.data.tools.detector import BioFormat
 #    'type': basestring }
 #    default_values = {'format': 'txt'}
 
+class AccessMode:
+
+    READONLY = 0
+    READWRITE = 1
 
 class ObjectManager:
     """
@@ -83,6 +87,7 @@ class ObjectManager:
             #if ObjectManager.use_repo:
             #    ObjectManager.repo = Repo.init(self.get_storage_path())
 
+
     @classmethod
     def _get_file_root(cls, uid):
         '''Get the file root to append to the pairtree path
@@ -122,6 +127,23 @@ class ObjectManager:
         '''Get full path for a file uid'''
         return ObjectManager.get_storage_path() + pairtree.id2path(uid) + \
             "/" + ObjectManager._get_file_root(uid) + "/" + uid
+
+    @classmethod
+    def get_url(cls, uid, mode=AccessMode.READONLY, lifetime=3600):
+        '''
+        Return an URL with a temporary token to serve the dataset
+
+        :param uid: Id of the dataset
+        :type uid: basestring
+        :param mode: allowed access mode
+        :type mode: AccessMode.READONLY, AccessMode.READWRITE
+        :param lifetime: duration of the token in seconds
+        :type lifetime: int
+        :return: basetring, url path (not containing the url root path)
+        '''
+
+        # TODO generate token and return url
+        return None
 
     def _delete_file(self, uid, options=None):
         '''
