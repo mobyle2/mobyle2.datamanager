@@ -14,6 +14,6 @@ nose
 webtest
 mongokit
 pyftpdlib
-gitpython
+gitpython=0.3.2.RC1
 yapsy
 git+https://github.com/mobyle2/mobyle2.lib.git@develop#egg=mobyle2.lib
