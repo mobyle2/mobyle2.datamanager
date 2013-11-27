@@ -55,7 +55,8 @@ class DataManagerTest(unittest.TestCase):
                 project.delete()
 
         def test_add(self):
-            fid = self.manager.add("sample.py")
+            newdata = self.manager.add("sample.py")
+            fid = newdata['_id']
             data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
             self.assertTrue(data is not None)
             self.assertTrue(data['status'] == ObjectManager.QUEUED)
