@@ -85,7 +85,7 @@ class DataManagerTest(unittest.TestCase):
             options = {'uncompress': False, 'group': False, 'type':
             'text/plain', 'format': 'python'}
             newdata = self.manager.store('sample.py', __file__, options)
-            fid = newdata['_id']
+            fid = str(newdata['_id'])
             data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
             self.assertTrue(data['status'] == ObjectManager.DOWNLOADED)
             self.assertTrue(os.path.exists(DataManagerTest.datadir +
