@@ -63,7 +63,8 @@ class DataManagerTest(unittest.TestCase):
         def test_store(self):
             options = {'uncompress': False, 'group': False, 'type':
             'text/plain', 'format': 'python'}
-            fid = self.manager.store('sample.py', __file__, options)
+            newdata = self.manager.store('sample.py', __file__, options)
+            fid = newdata['_id']
             data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
             self.assertTrue(data is not None)
             self.assertTrue(data['status'] == ObjectManager.DOWNLOADED)
@@ -73,7 +74,8 @@ class DataManagerTest(unittest.TestCase):
         def test_update(self):
             options = {'uncompress': False, 'group': False, 'type':
             'text/plain', 'format': 'python'}
-            options['id'] = self.manager.add(__file__, options)
+            newdata = self.manager.add(__file__, options)
+            options['id'] = newdata['_id']
             self.manager.update(ObjectManager.ERROR, options)
             data = connection.ProjectData.find_one({'_id': ObjectId(options['id'])})
             self.assertTrue(data is not None)
@@ -82,7 +84,8 @@ class DataManagerTest(unittest.TestCase):
         def test_delete(self):
             options = {'uncompress': False, 'group': False, 'type':
             'text/plain', 'format': 'python'}
-            fid = self.manager.store('sample.py', __file__, options)
+            newdata = self.manager.store('sample.py', __file__, options)
+            fid = newdata['_id']
             data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
             self.assertTrue(data['status'] == ObjectManager.DOWNLOADED)
             self.assertTrue(os.path.exists(DataManagerTest.datadir +
@@ -126,7 +129,8 @@ class DataManagerTest(unittest.TestCase):
             options['format'] = 'text'
             options['rurl'] = os.path.join(my_user['home_dir'],'sample.txt')
             manager = ObjectManager()
-            options['id'] = manager.add(options['rurl'], options)
+            newdata  =manager.add(options['rurl'], options)
+            options['id'] = newdata['_id']
             download(options['rurl'], options)
             data = connection.ProjectData.find_one({'_id': ObjectId(options['id'])})
             self.assertTrue(os.path.exists(DataManagerTest.datadir +
@@ -155,7 +159,8 @@ class DataManagerTest(unittest.TestCase):
             options['format'] = 'text'
             options['rurl'] = os.path.join(my_user['home_dir'],'sample.txt')
             manager = ObjectManager()
-            options['id'] = manager.add(options['rurl'], options)
+            newdata = manager.add(options['rurl'], options)
+            options['id'] = newdata['_id']
             download(options['rurl'], options)
             data = connection.ProjectData.find_one({'_id': ObjectId(options['id'])})
             self.assertTrue(os.path.exists(DataManagerTest.datadir +
