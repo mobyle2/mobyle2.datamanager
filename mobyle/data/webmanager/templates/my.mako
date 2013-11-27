@@ -2,7 +2,7 @@
 
 <%
 from pyramid.url import route_url,static_url
-from mobyle.data.manager.objectmanager import ObjectManager
+from mobyle.common.objectmanager import ObjectManager
 from mobyle.data.manager.pluginmanager import DataPluginManager
 
 DataPluginManager.get_manager()

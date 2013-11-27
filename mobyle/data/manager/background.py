@@ -8,7 +8,7 @@ from zipfile import ZipFile, is_zipfile
 from celery import Celery
 from celery.task import task
 from mobyle.common.config import Config
-from mobyle.data.manager.objectmanager import ObjectManager
+from mobyle.common.objectmanager import ObjectManager
 
 from  mobyle.data.manager.pluginmanager import DataPluginManager
 from mobyle.common.connection import connection

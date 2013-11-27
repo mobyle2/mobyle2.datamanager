@@ -5,6 +5,5 @@ manager Package
 
     mobyle.data.manager.plugins
     mobyle.data.manager.background
-    mobyle.data.manager.objectmanager
     mobyle.data.manager.pluginmanager
 
