@@ -7,7 +7,7 @@ import mobyle.common
 from mobyle.common.connection import connection
 from mobyle.common.project import ProjectData, Project
 
-from mobyle.data.manager.objectmanager import ObjectManager
+from mobyle.common.objectmanager import ObjectManager
 
 from bson import ObjectId
 
@@ -116,15 +116,12 @@ class MobyleFileSystem(AbstractedFS):
         if path == '/':
             # Root dir, list projects
             projects = connection.Project.find({"users": {"$elemMatch": {'user.$id': ObjectId(self._uid)}}})
-            #projects = connection.FakeProject.find()
             for project in projects:
                 files.append(project)
         else:
             project = elts[1].split('_')
             projectdata = connection.ProjectData.find({"project": ObjectId(project[0])})
-            #fakedata = connection.ProjectData.find({ 'project' : project[1] })
             for data in projectdata:
-                #files.append(data['uid'])
                 files.append(data)
         logging.warn("list files " + str(files))
         return files

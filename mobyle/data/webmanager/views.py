@@ -5,11 +5,9 @@ from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPNotFound
 from pyramid.renderers import render_to_response
 from pyramid.response import Response
-#from pyramid.view import  render_view_to_response
 
 import json
 import urllib
-#import bcrypt
 import re
 import logging
 import os
@@ -21,9 +19,7 @@ from bson import json_util
 import mobyle.common
 from mobyle.common.connection import connection
 from mobyle.common.mobyleConfig import MobyleConfig
-#import mobyle.data.manager.objectmanager
-from mobyle.data.manager.objectmanager import ObjectManager
-#from mobyle.common.project import ProjectData
+from mobyle.common.objectmanager import ObjectManager
 
 from bson import ObjectId
 

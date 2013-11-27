@@ -19,8 +19,8 @@ from mobyle.common.connection import connection
 base_url = "http://localhost:6543"
 
 import mobyle.data.manager
-import mobyle.data.manager.objectmanager
-from mobyle.data.manager.objectmanager import ObjectManager
+import mobyle.common.objectmanager
+from mobyle.common.objectmanager import ObjectManager
 from mobyle.common.project import ProjectData
 from mobyle.data.manager.background import download
 

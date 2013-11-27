@@ -29,7 +29,7 @@ config = Config(args.config).config()
 
 import mobyle.common
 from mobyle.common.connection import connection
-from mobyle.data.manager.objectmanager import FakeData,FakeProject
+from mobyle.common.objectmanager import FakeData,FakeProject
 
 # Create root user
 if connection.FakeProject.find({ 'name' : 'sample' }).count() == 0:
