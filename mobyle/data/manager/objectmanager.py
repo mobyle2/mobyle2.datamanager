@@ -14,6 +14,7 @@ import mobyle.common
 from mobyle.common.connection import connection
 from mobyle.common.config import Config
 from mobyle.common.data import RefData, ListData, StructData
+from mobyle.common import tokens
 
 #from mongokit import Document
 from bson.objectid import ObjectId
@@ -129,21 +130,40 @@ class ObjectManager:
             "/" + ObjectManager._get_file_root(uid) + "/" + uid
 
     @classmethod
-    def get_url(cls, uid, mode=AccessMode.READONLY, lifetime=3600):
+    def get(cls, uid):
         '''
-        Return an URL with a temporary token to serve the dataset
+        Gets a dataset from its uid
 
         :param uid: Id of the dataset
         :type uid: basestring
+        :return: ProjectData
+        '''
+        return connection.ProjectData.find_one({"_id": ObjectId(uid)})
+
+    @classmethod
+    def get_token(cls, uid, file_path, mode=AccessMode.READONLY, lifetime=3600):
+        '''
+        Return a temporary token to serve a dataset file
+
+        :param uid: Id of the dataset
+        :type uid: basestring
+        :param file_path: relative path to the file in the dataset
+        :type file_path: basetring
         :param mode: allowed access mode
         :type mode: AccessMode.READONLY, AccessMode.READWRITE
         :param lifetime: duration of the token in seconds
         :type lifetime: int
-        :return: basetring, url path (not containing the url root path)
+        :return: basetring, token
         '''
-
-        # TODO generate token and return url
-        return None
+        token_path = os.path.join(ObjectManager.get_storage_path(uid),file_path)
+        temptoken = connection.Token()
+        temptoken.generate(lifetime)
+        token_data  = dict()
+        token_data['file'] = token_path
+        token_data['access'] = mode
+        temptoken['data'] = token_data
+        temptoken.save()
+        return temptoken['token']
 
     def _delete_file(self, uid, options=None):
         '''
@@ -222,7 +242,10 @@ class ObjectManager:
         Config.config()
         #uid = uuid.uuid4().hex
         dataset = connection.ProjectData()
-        dataset['data'] = RefData()
+        if 'schema' in options:
+            dataset['data'] = options['schema']
+        else:
+            dataset['data'] = RefData()
         dataset['name'] = name
         dataset['status'] = ObjectManager.QUEUED
         if 'path' in options:
@@ -233,7 +256,8 @@ class ObjectManager:
         dataset.save()
         if ObjectManager.use_repo and not options['uncompress']:
             ObjectManager.get_repository_index(str(dataset['_id']))
-        return str(dataset['_id'])
+        #return str(dataset['_id'])
+        return dataset
 
     @classmethod
     def isarchive(cls, filepath):
@@ -402,6 +426,7 @@ class ObjectManager:
         :type options: dict
         :return: data database id
         '''
+        dataset = None
         if options is None:
             options = {}
         Config.config()
@@ -467,7 +492,8 @@ class ObjectManager:
                 msg = "Update file content"
             index.commit(msg + " " + dataset['name'])
 
-        return str(dataset['_id'])
+        #return str(dataset['_id'])
+        return dataset
 
     def history(self, fid):
         '''

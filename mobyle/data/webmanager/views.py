@@ -287,7 +287,9 @@ def upload_remote_data(request):
 
     #files = {}
     if options['id'] is None:
-        options['id'] = manager.add(options['rurl'], options)
+        new_dataset = manager.add(options['rurl'], options)
+        if new_dataset is not None:
+            options['id'] = str(new_dataset['_id'])
 
     # If http,ftp,scp i.e. base protocols, do not check plugins
     if options['protocol'] is not None and \
