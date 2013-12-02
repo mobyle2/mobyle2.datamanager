@@ -32,6 +32,7 @@ class DataManagerTest(unittest.TestCase):
         def setUp(self):
             from webtest import TestApp
             self.testapp = TestApp("config:development.ini", relative_to="./")
+            ObjectManager()
             if MobyleConfig.get_current() is None:
                 mob_config = connection.MobyleConfig()
                 mob_config['active'] = True
@@ -69,8 +70,8 @@ class DataManagerTest(unittest.TestCase):
             data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
             self.assertTrue(data is not None)
             self.assertTrue(data['status'] == ObjectManager.DOWNLOADED)
-            self.assertTrue(os.path.exists(DataManagerTest.datadir +
-                            "/pairtree_root/" + data['data']['path']))
+            self.assertTrue(os.path.exists(os.path.join(newdata.get_file_path(),
+                                                        data['data']['path'])))
 
         def test_update(self):
             options = {'uncompress': False, 'group': False, 'type':
@@ -89,24 +90,17 @@ class DataManagerTest(unittest.TestCase):
             fid = str(newdata['_id'])
             data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
             self.assertTrue(data['status'] == ObjectManager.DOWNLOADED)
-            self.assertTrue(os.path.exists(DataManagerTest.datadir +
-                            "/pairtree_root/" + data['data']['path']))
+            self.assertTrue(os.path.exists(os.path.join(newdata.get_file_path(),
+                                                        data['data']['path'])))
             self.manager.delete(fid, options)
-            self.assertFalse(os.path.exists(DataManagerTest.datadir +
-                            "/pairtree_root/" + data['data']['path']))
+            self.assertFalse(os.path.exists(os.path.join(newdata.get_file_path(),
+                                                        data['data']['path'])))
             try:
                 data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
                 self.fail("Data should have been deleted")
             except Exception:
                 # Nothing found, this is fine
                 pass
-
-        def test_isarchive(self):
-            self.assertTrue(self.manager.isarchive('test.zip') is not None)
-            self.assertTrue(self.manager.isarchive('test.tar.gz') is not None)
-            self.assertTrue(self.manager.isarchive('test.bz2') is not None)
-            self.assertTrue(self.manager.isarchive('test.txt') is None)
-
 
         def test_copy_local(self):
             my_user = connection.User()
@@ -117,10 +111,10 @@ class DataManagerTest(unittest.TestCase):
             my_project['name'] = 'sample'
             my_project['owner'] = my_user['_id']
             my_project.save()
-            my_tmp_file = open( os.path.join(my_user['home_dir'],'sample.txt'),'w')
+            my_tmp_file = open(os.path.join(my_user['home_dir'],'sample.txt'),'w')
             my_tmp_file.write("some data")
             my_tmp_file.close()
-	    options = {}
+            options = {}
             options['user_id'] = str(my_user['_id'])
             options['protocol'] = 'file://'
             options['group'] = False
@@ -129,13 +123,12 @@ class DataManagerTest(unittest.TestCase):
             options['type'] = 'text/plain'
             options['format'] = 'text'
             options['rurl'] = os.path.join(my_user['home_dir'],'sample.txt')
-            manager = ObjectManager()
-            newdata  =manager.add(options['rurl'], options)
+            newdata = ObjectManager.add(options['rurl'], options)
             options['id'] = newdata['_id']
             download(options['rurl'], options)
             data = connection.ProjectData.find_one({'_id': ObjectId(options['id'])})
-            self.assertTrue(os.path.exists(DataManagerTest.datadir +
-                            "/pairtree_root/" + data['data']['path']))
+            self.assertTrue(os.path.exists(os.path.join(newdata.get_file_path(),
+                                            data['data']['path'])))
 
 
         def test_symlink_local(self):
@@ -150,7 +143,7 @@ class DataManagerTest(unittest.TestCase):
             my_tmp_file = open( os.path.join(my_user['home_dir'],'sample.txt'),'w')
             my_tmp_file.write("some data")
             my_tmp_file.close()
-	    options = {}
+            options = {}
             options['user_id'] = str(my_user['_id'])
             options['protocol'] = 'symlink://'
             options['group'] = False
@@ -164,6 +157,5 @@ class DataManagerTest(unittest.TestCase):
             options['id'] = newdata['_id']
             download(options['rurl'], options)
             data = connection.ProjectData.find_one({'_id': ObjectId(options['id'])})
-            self.assertTrue(os.path.exists(DataManagerTest.datadir +
-                            "/pairtree_root/" + data['data']['path']))
-
+            self.assertTrue(os.path.exists(os.path.join(newdata.get_file_path(),
+                                                        data['data']['path'])))

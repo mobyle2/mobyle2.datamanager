@@ -9,6 +9,7 @@ from celery import Celery
 from celery.task import task
 from mobyle.common.config import Config
 from mobyle.common.objectmanager import ObjectManager
+from mobyle.common.mobyleError import MobyleError
 
 from  mobyle.data.manager.pluginmanager import DataPluginManager
 from mobyle.common.connection import connection
@@ -69,42 +70,61 @@ def download(furl, options=None):
             (out, file_path) = tempfile.mkstemp()
             output_file = open(file_path, 'wb')
             output_file.write(f.read())
-            options['file'] = file_path
-            mngr.update(ObjectManager.DOWNLOADED, options)
-            os.remove(file_path)
+            options['files'] = [file_path]
+            dataset = mngr.update(ObjectManager.DOWNLOADED, options)
+            if len(dataset) > 1:
+                raise MobyleError("download manage only one file")
+            if dataset[0]['status'] == ObjectManager.UNCOMPRESS:
+                # delay decompression
+                options['delete'] = True
+                uncompress.delay(file_path, options)
+            else:
+                os.remove(file_path)
         elif options['protocol'] in ['file://', 'symlink://']:
             if 'user_id' not in options:
                 logging.error('no user id for file/symlink task')
                 return
             user = connection.User.find_one({'_id':
                                             ObjectId(options['user_id'])})
-            file_path = os.path.join(user['home_dir'],furl)
+            file_path = os.path.join(user['home_dir'], furl)
             # Only copy from user home directory
             if user['home_dir'] and \
             os.path.realpath(file_path).startswith(user['home_dir']):
                 # Do the copy or symlink
                 if options['protocol'] == 'symlink://':
                     # symlink
-                    options['file'] =  file_path
+                    options['files'] = [file_path]
                     mngr.update(ObjectManager.SYMLINK, options)
                 else:
                     # copy
-                    options['file'] =  file_path
-                    mngr.update(ObjectManager.DOWNLOADED, options)
+                    options['files'] = [file_path]
+                    dataset = mngr.update(ObjectManager.DOWNLOADED, options)
+                    # We manage here one file at a time, so only one dataset
+                    if len(dataset) > 1:
+                        raise MobyleError("download manage only one file") 
+                    if dataset[0]['status'] == ObjectManager.UNCOMPRESS:
+                        # delay decompression
+                        uncompress.delay(file_path, options)
 
         elif options['protocol'] in DataPluginManager.supported_protocols:
             # Use plugins
             plugin = data_plugin_manager.getPluginByName(options['protocol'])
             drop = plugin.plugin_object
             file_path = drop.download(furl, options)
-            options['file'] = file_path
-            mngr.update(ObjectManager.DOWNLOADED, options)
-            os.remove(file_path)
+            options['files'] = [file_path]
+            dataset = mngr.update(ObjectManager.DOWNLOADED, options)
+            if len(dataset) > 1:
+                raise MobyleError("download manage only one file")
+            if dataset[0]['status'] == ObjectManager.UNCOMPRESS:
+                # delay decompression
+                uncompress.delay(file_path, options)
+            else:
+                os.remove(file_path)
         else:
             logging.error("no matching protocol: " + str(options['protocol']))
             mngr.update(ObjectManager.ERROR, options)
     except Exception as e:
-        logging.error("Download error: " + str(e))
+        logging.error("Download error: " + str(e)+" for "+furl)
         mngr.update(ObjectManager.ERROR, options)
 
 
@@ -139,6 +159,8 @@ def uncompress(f, options=None):
             options['files'].append(os.path.join(dir_path, filename))
     try:
         mngr.update(ObjectManager.UNCOMPRESSED, options)
+        if 'delete' in options and options['delete']:
+                os.remove(f)
     except Exception:
         mngr.update(ObjectManager.ERROR, options)
 
