@@ -8,13 +8,13 @@ branches:
     - /^feature.*$/
 # command to install dependencies with mobyle2.lib on develop
 install:
-#  - "pip install paste pastedeploy pastescript py-bcrypt mongokit mf pygeoip"
-#  - "pip install uuid pairtree gitpython==0.3.2.RC1"
+  - "pip install paste pastedeploy pastescript py-bcrypt mongokit mf pygeoip"
+  - "pip install uuid pairtree gitpython==0.3.2.RC1"
   - "pip install coverage"
   - "pip install python-coveralls"
-#  - "pip install git+https://github.com/mobyle2/xml2json.git#egg=xml2json"
+  - "pip install git+https://github.com/mobyle2/xml2json.git#egg=xml2json"
   - "pip install git+https://github.com/mobyle2/mobyle2.lib.git@develop#egg=mobyle.lib"
-  - "pip install -r %{TRAVIS_BUILD_DIR}/mobyle.lib/requirements.txt"
+#  - "pip install -r %{TRAVIS_BUILD_DIR}/mobyle.lib/requirements.txt"
   - "pip install -r requirements.txt"
   - "python setup.py -q install"
 # command to run tests
