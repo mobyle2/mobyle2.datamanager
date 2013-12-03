@@ -49,8 +49,8 @@ if connection.User.find({ 'first_name' : 'John' }).count() == 0:
 
     project = connection.Project()
     project['name'] = 'sample'
-    project['owner'] = user
-    project['users'].append({ 'user' : user, 'role' : 'myrole'})
+    project['owner'] = user['_id']
+    project['users'].append({ 'user' : user['_id'], 'role' : 'myrole'})
     project.save()
 
     print "Api Key "+user['apikey']
