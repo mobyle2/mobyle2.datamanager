@@ -7,7 +7,7 @@ pymongo
 argparse
 pairtree
 uuid
-Celery
+Celery==3.0.23
 celery-with-mongodb
 pyramid_celery
 nose

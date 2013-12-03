@@ -153,12 +153,13 @@ def uncompress(f, options=None):
     mngr = ObjectManager()
 
     dir_path = tempfile.mkdtemp()
-
+    print "OSALLOU uncompress "+f
     if is_zipfile(f):
         myzip = ZipFile(f, 'r')
         myzip.extractall(dir_path)
         myzip.close()
     else:
+        print "OSALLOU Not a zip file"
         mngr.update(ObjectManager.ERROR, options)
         return
 
@@ -167,6 +168,7 @@ def uncompress(f, options=None):
         for filename in filenames:
             options['files'].append(os.path.join(dir_path, filename))
     try:
+        print "OSALLOU update with files: "+str(options['files'])
         mngr.update(ObjectManager.UNCOMPRESSED, options)
         if 'delete' in options and options['delete']:
                 os.remove(f)

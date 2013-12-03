@@ -5,6 +5,7 @@ from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPNotFound
 from pyramid.renderers import render_to_response
 from pyramid.response import Response
+from pyramid.settings import asbool
 
 import json
 import urllib
@@ -13,6 +14,7 @@ import logging
 import os
 import pairtree
 import tempfile
+from copy import deepcopy
 
 from bson import json_util
 
@@ -66,8 +68,9 @@ def data_plugin_upload(request):
         options['id'] = uid
         #uid = dataset['uid']
         options['name'] = dataset['name']
-        dfile = manager.get_storage_path() + \
-                '/' + pairtree.id2path(uid) + "/" + uid
+        dfile = dataset.get_file_path()  + "/" + uid
+        #dfile = manager.get_storage_path() + \
+        #        '/' + pairtree.id2path(uid) + "/" + uid
     except Exception as e:
         logging.error("Wrong input paramerers: " + str(e))
         request.session.flash("Wrong input paramerers")
@@ -88,7 +91,7 @@ def data_plugin_upload(request):
                 values, request=request)
 
     options = drop.set_options(request.session, options)
-    use_delay = request.registry.settings['delay_background']
+    use_delay = asbool(request.registry.settings['delay_background'])
     if use_delay:
         options['delay'] = True
         upload.delay(dfile, options)
@@ -137,6 +140,7 @@ def my(request):
     user = {}
     projectdata = {}
     httpsession = request.session
+    projectsname = {}
     if "_id" in httpsession:
         user = connection.User.find_one({'_id': ObjectId(httpsession['_id'])})
         try:
@@ -145,11 +149,12 @@ def my(request):
             projects = []
             for project in user_projects:
                 projects.append(project['_id'])
+                projectsname[str(project['_id'])] = project['name']
             projectdata = connection.ProjectData.find({"project": {"$in": projects}})
         except Exception as e:
             logging.error("ProjectData error: " + str(e))
             return {'user': user, 'data': []}
-    return {'user': user, 'data': projectdata}
+    return {'user': user, 'data': projectdata, 'projectsname' : projectsname }
 
 
 @view_config(route_name='logout', renderer='mobyle.data.webmanager:templates/index.mako')
@@ -313,7 +318,7 @@ def upload_remote_data(request):
     httpsession = request.session
     if "_id" in httpsession:
         options['user_id'] = httpsession['_id']
-    use_delay = request.registry.settings['delay_background']
+    use_delay = asbool(request.registry.settings['delay_background'])
     if use_delay:
         options['delay'] = True
         download.delay(options['rurl'], options)
@@ -339,6 +344,7 @@ def data(request):
         dataset = connection.ProjectData.find_one({"_id": ObjectId(did)})
         projectname = connection.Project.find_one({"_id": dataset['project']})
         dataset['project'] = projectname['name']
+        dataset['rootpath'] = ObjectManager.get_relative_file_path(dataset['_id'])
         manager = ObjectManager()
         return Response(json.dumps({'dataset': dataset, 'history':
             manager.history(did)}, default=json_util.default))
@@ -434,7 +440,21 @@ def write_blob(data, info, options):
         logging.debug('Should group data')
 
     mngr = ObjectManager()
-    mngr.store(info['name'], file_path, options)
+    dataset = mngr.store(info['name'], file_path, options)
+    if dataset['status'] == ObjectManager.UNCOMPRESS:
+        # delay decompression
+        from mobyle.data.manager.background import uncompress
+        newoptions = deepcopy(options)
+        newoptions['id'] = str(dataset['_id'])
+        newoptions['format'] = options['original_format']
+        use_delay = options['delay']
+        if use_delay:
+            newoptions['delay'] = True
+            uncompress.delay(dataset.get_file_path()+"/"+str(dataset['_id']), newoptions)
+        else:
+            newoptions['delay'] = False
+            uncompress(dataset.get_file_path()+"/"+str(dataset['_id']), newoptions)
+
     os.remove(file_path)
     return file_path
 
@@ -445,6 +465,7 @@ def handle_file_upload(request, options):
     '''
     results = []
     blob_keys = []
+    options['delay'] = asbool(request.registry.settings['delay_background'])
     for name, fieldStorage in request.POST.items():
         if type(fieldStorage) is unicode:
             continue

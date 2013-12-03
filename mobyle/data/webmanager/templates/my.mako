@@ -42,18 +42,20 @@ DataPluginManager.get_manager()
 %>
 <tr id="tr-${str(d['_id'])}"><td>${status |n}</td><td>
 % if 'project' in d:
-  ${str(d['project'])}
+  ${projectsname[str(d['project'])]}
 % endif
 </td>
 <td>${d['name']}</td>
 % if 'type' in d['data']:
 <td>${d['data']['type']}/${d['data']['format']}
+% else:
+<td>N/A</td>
 % endif
 </td>
 % if 'path' in d['data']:
 <td>${d['data']['path']}</td><td>${d['data']['size']}</td>
 % else:
-<td></td><td></td>
+<td>N/A</td><td>N/A</td>
 %endif
 <td>${actions |n}</td></tr>
 % endfor
@@ -108,10 +110,15 @@ $('.datasetmodal').click(function(e) {
 			infoHtml+="<div><h3>Files</h3>";
 			$.each(data['dataset']['data']['value'], function(key,value) {
 				if('path' in value) {
-					infoHtml+="<div>" + basename(value['path']) + "</div>";
+                    fpath = data['dataset']['rootpath']+"/"+value['path']
+					infoHtml += "<div>";
+                    infoHtml += basename(value['path']) ;
+                    infoHtml += " ("+bytesToSize(value['size'])+")";
+                    infoHtml += "<button class=\"btn btn-info download\" data-uid=\""+fpath+"\"><li class=\"icon-download\"> </li></button>";
+                    infoHtml += "</div>";
 				}
 				else {
-					infoHtml+="<div>" + value['value'] + "</div>";
+					infoHtml += "<div>" + value['value'] + "</div>";
 				}
 			});
 			infoHtml += "</div>";
@@ -162,7 +169,7 @@ $('.btn-data-plugin').click(function(e) {
         window.open("${request.route_url('data_plugin')}/"+$(this).attr('data-plugin')+"/upload?protocol="+$(this).attr('data-plugin')+"&id="+$(this).attr('data-uid'));
 });
 
-$('.download').click(function(e) {
+$(document).on("click",'.download', function(e) {
         uid = $(this).attr('data-uid');
         window.open("${static_url(downloadpath, request)}/"+ uid);
 });
