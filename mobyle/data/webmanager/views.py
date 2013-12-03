@@ -28,23 +28,24 @@ from mobyle.data.manager.background import download, upload
 
 from  mobyle.data.manager.pluginmanager import DataPluginManager
 
-_BASE_PROTOCOLS = None
+class Protocols:
+    _BASE_PROTOCOLS = None
 
 def get_protocols():
     """Return the list of allowed protocols"""
-    if _BASE_PROTOCOLS is not None:
-        return _BASE_PROTOCOLS
-    _BASE_PROTOCOLS = []
+    if Protocols._BASE_PROTOCOLS is not None:
+        return Protocols._BASE_PROTOCOLS
+    Protocols._BASE_PROTOCOLS = []
     mob_config = MobyleConfig.get_current()
     allowed_protocols = mob_config['data']['remote']['allowed_protocols']
     if allowed_protocols:
         allowed_list = allowed_protocols.split(",")
         for protocol in allowed_list:
-            _BASE_PROTOCOLS.append(protocol.strip()+"://")
+            Protocols._BASE_PROTOCOLS.append(protocol.strip()+"://")
     if mob_config['data']['local']['allowed_copy']:
-        _BASE_PROTOCOLS.append('file://')
-        _BASE_PROTOCOLS.append('symlink://')
-    return _BASE_PROTOCOLS
+        Protocols._BASE_PROTOCOLS.append('file://')
+        Protocols._BASE_PROTOCOLS.append('symlink://')
+    return Protocols._BASE_PROTOCOLS
 
 
 
