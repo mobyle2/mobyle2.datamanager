@@ -62,7 +62,7 @@ if connection.MobyleConfig.find().count() == 0:
     cf['active'] = True
     cf['data'] = {}
     cf['data']['remote'] = {}
-    cf['data']['remote']['allowed_protocols'] = "file://,http://"
+    cf['data']['remote']['allowed_protocols'] = "ftp,http"
     cf['data']['local'] = {}
     cf['data']['local']['allowed_copy'] = True
     cf.save()
