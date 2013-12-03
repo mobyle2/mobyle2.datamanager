@@ -177,7 +177,7 @@ def login(request):
     try:
         projects = []
         if "_id" in httpsession:
-            user_projects = connection.Project.find({"users": {"$elemMatch": {'user.$id': user['_id']}}})
+            user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
             for up in user_projects:
                 projects.append({"name": up["name"],"id": up["_id"]})
             user['projects'] = projects
@@ -196,7 +196,7 @@ def get_user(request):
         user = connection.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
         projects = []
         try:
-            user_projects = connection.Project.find({"users": {"$elemMatch": {'user.$id': user['_id']}}})
+            user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
             for up in user_projects:
                 projects.append({"name": up["name"],"id": up["_id"]})
             user['projects'] = projects
