@@ -55,3 +55,15 @@ if connection.User.find({ 'first_name' : 'John' }).count() == 0:
 
     print "Api Key "+user['apikey']
 
+from mobyle.common.mobyleConfig import MobyleConfig
+#Create default config
+if connection.MobyleConfig.find().count() == 0:
+    cf = connection.MobyleConfig()
+    cf['active'] = True
+    cf['data'] = {}
+    cf['data']['remote'] = {}
+    cf['data']['remote']['allowed_protocols'] = "file://,http://"
+    cf['data']['local'] = {}
+    cf['data']['local']['allowed_copy'] = True
+    cf.save()
+
