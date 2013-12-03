@@ -77,7 +77,10 @@ def download(furl, options=None):
             if dataset[0]['status'] == ObjectManager.UNCOMPRESS:
                 # delay decompression
                 options['delete'] = True
-                uncompress.delay(file_path, options)
+                if options['delay']:
+                    uncompress.delay(file_path, options)
+                else:
+                    uncompress(file_path, options)
             else:
                 os.remove(file_path)
         elif options['protocol'] in ['file://', 'symlink://']:
@@ -104,7 +107,10 @@ def download(furl, options=None):
                         raise MobyleError("download manage only one file") 
                     if dataset[0]['status'] == ObjectManager.UNCOMPRESS:
                         # delay decompression
-                        uncompress.delay(file_path, options)
+                        if options['delay']:
+                            uncompress.delay(file_path, options)
+                        else:
+                            uncompress(file_path, options)
 
         elif options['protocol'] in DataPluginManager.supported_protocols:
             # Use plugins
@@ -117,7 +123,10 @@ def download(furl, options=None):
                 raise MobyleError("download manage only one file")
             if dataset[0]['status'] == ObjectManager.UNCOMPRESS:
                 # delay decompression
-                uncompress.delay(file_path, options)
+                if options['delay']:
+                    uncompress.delay(file_path, options)
+                else:
+                    uncompress(file_path, options)
             else:
                 os.remove(file_path)
         else:

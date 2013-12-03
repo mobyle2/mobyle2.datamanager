@@ -88,7 +88,13 @@ def data_plugin_upload(request):
                 values, request=request)
 
     options = drop.set_options(request.session, options)
-    upload.delay(dfile, options)
+    use_delay = request.registry.settings['delay_background']
+    if use_delay:
+        options['delay'] = True
+        upload.delay(dfile, options)
+    else:
+        options['delay'] = False
+        upload(dfile,options)
     request.session.flash('Upload to DropBox in progress')
     values = my(request)
     return render_to_response('mobyle.data.webmanager:templates/my.mako',
@@ -307,8 +313,13 @@ def upload_remote_data(request):
     httpsession = request.session
     if "_id" in httpsession:
         options['user_id'] = httpsession['_id']
-
-    download.delay(options['rurl'], options)
+    use_delay = request.registry.settings['delay_background']
+    if use_delay:
+        options['delay'] = True
+        download.delay(options['rurl'], options)
+    else:
+        options['delay'] = False
+        download(options['rurl'], options)
     request.session.flash('File download request in progress')
     return {'user': get_user(request), 'protocols': get_protocols()}
 

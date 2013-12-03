@@ -12,8 +12,30 @@ This is only a prototype. Many features/security etc.. are not implemented.
 
 python  src/mobyle2.datamanager/db/fakeuser.py --config src/mobyle2.datamanager/development.ini
 
+## Configuration
+
+delay_background = false
+
+Set to true to use Celery to execute some time intensive tasks in background
+
+store = /tmp/data
+Pairtree (dataset files) location
+
+upload_dir = /tmp/ftp
+Temporary location for file uploads
+
+use_history = true
+Manage history on datasets, needs git installed
+
+drop_key =
+drop_secret =
+DropBox identifiers for plugin
+
+
 
 ## Access
+
+pserve --reload src/mobyle2.datamanager/development.ini
 
 Root url is http://localhost:6543/data-manager
 
@@ -24,8 +46,6 @@ FTP:
 
 In case of remote_upload file://
  - check if allowed in configuration
- - only only local registered users (ldap)
- - limit access to a list of root directories
 
 Add revert possibility for files from a previous version of file
 Add user id in history for file history management
@@ -50,7 +70,7 @@ Analyse possibility to use dulwich instead of gitpython+git
 Background tasks are manaed with celery.
 
 To start celery:
-    pceleryd src/datamngr/development.ini
+    pceleryd src/mobyle2.datamanager/development.ini
 
 Configuration (broker, workers etc...) should be set in ini file.
 
