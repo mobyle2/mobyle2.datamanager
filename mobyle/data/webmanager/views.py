@@ -105,7 +105,7 @@ def my_json(request):
         user = connection.User.find_one({'apikey': request.params.getone("apikey")})
         if user:
             try:
-                user_projects = connection.Project.find({"users": {"$elemMatch": {'user.$id': user['_id']}}})
+                user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
                 projects = []
                 for project in user_projects:
                     projects.append(project)
@@ -135,7 +135,7 @@ def my(request):
         user = connection.User.find_one({'_id': ObjectId(httpsession['_id'])})
         try:
             # TODO get data owned by  user
-            user_projects = connection.Project.find({"users": {"$elemMatch": {'user.$id': user['_id']}}})
+            user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
             projects = []
             for project in user_projects:
                 projects.append(project['_id'])

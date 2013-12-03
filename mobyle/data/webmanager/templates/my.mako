@@ -36,7 +36,7 @@ DataPluginManager.get_manager()
   if d['status'] == 2:
     actions = '<a class="btn btn-info datasetmodal" data-uid="'+str(d['_id'])+'" role="button" href="#datasetModal"><li class="icon-eye-open"> </li></a>'
     if 'path' in d['data']:
-    	actions += '<button class="btn btn-info download" data-uid="'+str(d['data']['path'])+'"><li class="icon-download"> </li></button>'
+    	actions += '<button class="btn btn-info download" data-uid="'+ObjectManager.get_relative_file_path(d['_id'])+'/'+str(d['data']['path'])+'"><li class="icon-download"> </li></button>'
     actions += '<button class="btn btn-info update" data-uid="'+str(d['_id'])+'"><li class="icon-refresh"> </li></button>'
     actions += '<button class="btn btn-warning delete" data-uid="'+str(d['_id'])+'"><li class="icon-remove"> </li></button>'
 %>
@@ -46,7 +46,7 @@ DataPluginManager.get_manager()
 % endif
 </td>
 <td>${d['name']}</td>
-% if 'type' in d:
+% if 'type' in d['data']:
 <td>${d['data']['type']}/${d['data']['format']}
 % endif
 </td>
