@@ -295,7 +295,7 @@ def upload_remote_data(request):
 
     #files = {}
     if options['id'] is None:
-        new_dataset = manager.add(options['rurl'], options)
+        new_dataset = manager.add(options['rurl'].replace('/','_'), options)
         if new_dataset is not None:
             options['id'] = str(new_dataset['_id'])
 
