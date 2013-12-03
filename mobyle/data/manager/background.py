@@ -20,7 +20,7 @@ from bson.objectid import ObjectId
 # Initial setup
 CONF = Config.config()
 Celery('tasks', broker=CONF.get('app:main', 'db_uri') +
-        '/' + CONF.get('app:main', 'db_name') + '/')
+        CONF.get('app:main', 'db_name') )
 
 
 @task
