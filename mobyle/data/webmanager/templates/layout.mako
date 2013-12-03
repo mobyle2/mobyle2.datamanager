@@ -21,11 +21,12 @@ from pyramid.url import route_url,static_url
   <script src="${static_url('mobyle.data.webmanager:static/fileupload/js/jquery.fileupload.js',request)}"></script>
 
 <!-- The Templates plugin is included to render the upload/download listings -->
-<script src="http://blueimp.github.com/JavaScript-Templates/tmpl.min.js"></script>
+<script
+src="${static_url('mobyle.data.webmanager:static/javascript-templates/tmpl.min.js',request)}"></script>
 <!-- The Load Image plugin is included for the preview images and image resizing functionality -->
-<script src="http://blueimp.github.com/JavaScript-Load-Image/load-image.min.js"></script>
+<script src="${static_url('mobyle.data.webmanager:static/javascript-templates/load-image.min.js',request)}"></script>
 <!-- The Canvas to Blob plugin is included for image resizing functionality -->
-<script src="http://blueimp.github.com/JavaScript-Canvas-to-Blob/canvas-to-blob.min.js"></script>
+<script src="${static_url('mobyle.data.webmanager:static/javascript-templates/canvas-to-blob.min.js',request)}"></script>
 <!-- The File Upload file processing plugin -->
 <script src="${static_url('mobyle.data.webmanager:static/fileupload/js/jquery.fileupload-fp.js',request)}"></script>
 <!-- The File Upload user interface plugin -->
