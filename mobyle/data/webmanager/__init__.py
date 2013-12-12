@@ -15,6 +15,8 @@ def data_include(config):
     config.add_route('my', '/my')
     config.add_route('my.json', '/my.json')
     config.add_route('data', '/data/{uid}')
+    config.add_route('data_token','/data/{uid}/token')
+    config.add_route('data_download','data-download/{token}/*file')
 
     config.add_static_view('static', 'mobyle.data.webmanager:static', cache_max_age=3600)
 

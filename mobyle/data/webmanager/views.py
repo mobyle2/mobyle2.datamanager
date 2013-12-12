@@ -2,7 +2,7 @@
 from pyramid.view import view_config
 #from pyramid.security import remember, authenticated_userid, forget
 
-from pyramid.httpexceptions import HTTPNotFound
+from pyramid.httpexceptions import HTTPNotFound, HTTPForbidden
 from pyramid.renderers import render_to_response
 from pyramid.response import Response
 from pyramid.settings import asbool
@@ -21,7 +21,7 @@ from bson import json_util
 import mobyle.common
 from mobyle.common.connection import connection
 from mobyle.common.mobyleConfig import MobyleConfig
-from mobyle.common.objectmanager import ObjectManager
+from mobyle.common.objectmanager import ObjectManager, AccessMode
 
 from bson import ObjectId
 
@@ -58,6 +58,8 @@ def data_plugin_upload(request):
     '''
     httpsession = request.session
     #import mobyle.data.manager.plugins
+
+    #TODO check I own the dataset
 
     options = {}
     try:
@@ -104,6 +106,102 @@ def data_plugin_upload(request):
             values, request=request)
 
 
+def get_auth_user(request):
+    """
+    Get user object from either session or apikey
+
+    :param request: pyramid request object
+    :type request: Request
+    :return: a User object
+    """
+    user = None
+    httpsession = request.session
+    try:
+        if "_id" in httpsession:
+            user = connection.User.find_one({'_id': ObjectId(httpsession['_id'])})
+        else:
+            user = connection.User.find_one({'apikey': request.params.getone("apikey")})
+    except Exception as e:
+        logging.error("Could not match user:" + str(e))
+    return user
+
+def can_update_project(user, project):
+    """
+    Checks that user can add files to project
+
+    :param user: Logged user
+    :type user: User
+    :param project: Project to update
+    :type project: Project
+    :return: bool
+    """
+    project_filter = project.my(MF_EDIT, None, user['email'])
+    allowed = False
+    if project_filter is not None:
+        mffilter['_id'] = project['_id']
+        obj = connection.Project.find_one(mffilter)
+        if obj is not None:
+            allowed = True
+    return allowed
+
+def can_update_dataset(user, data):
+    """
+    Checks that user can modify or delete a dataset in a project
+
+    :param user: Logged user
+    :type user: User
+    :param data: ProjectData to update
+    :type data: ProjectData
+    :return: bool
+    """
+    project = connection.Project.find_one({"_id": data['project']})
+    if project is None:
+        return False
+    return can_update_project(user, project)
+
+
+@view_config(route_name='data_token', renderer='json')
+def data_token(request):
+    did = request.matchdict['uid']
+    dataset = connection.ProjectData.find_one({"_id": ObjectId(did)})
+    if dataset is None:
+        return HTTPNotFound()
+
+    user = get_auth_user(request)
+    if not can_update_dataset(user, dataset):
+        return HTTPForbidden()
+
+    lifetime = 0
+    try:
+        lifetime = request.params.getone('lifetime')
+    except Exception:
+        lifetime = 3600 * 24
+    file_path = []
+    token = ObjectManager.get_token(did, file_path , AccessMode.READONLY,
+                                    lifetime)
+    return {'token': token}
+
+@view_config(route_name='data_download', renderer='json')
+def data_download(request):
+    token = request.matchdict['token']
+    file_path = request.matchdict['file'].join('/')
+    logging.debug("request to download path "+file_path+" for token " \
+                  + token)
+    data_token = connection.Token.find_one({"token": token})
+    if data.token.check_validatity():
+        data_uid = data_token['data']['id']
+        dataset = connection.ProjectData.find_one({"_id": ObjectId(data_uid)})
+        # Get full path to the file
+        file_path = os.path.join(dataset.get_file_path(), file_path)
+        mime_type = 'application/'+dataset['data']['format']
+        response = FileResponse(file_path,
+                                request=request,
+                                content_type=mime_type)
+        return response
+
+    else:
+        raise HTTPForbidden()
+
 @view_config(route_name='my.json', renderer='json')
 def my_json(request):
     '''
@@ -111,7 +209,8 @@ def my_json(request):
     '''
     try:
         datasets = []
-        user = connection.User.find_one({'apikey': request.params.getone("apikey")})
+        user = get_auth_user(request)
+        #user = connection.User.find_one({'apikey': request.params.getone("apikey")})
         if user:
             try:
                 user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
@@ -141,8 +240,10 @@ def my(request):
     projectdata = {}
     httpsession = request.session
     projectsname = {}
-    if "_id" in httpsession:
-        user = connection.User.find_one({'_id': ObjectId(httpsession['_id'])})
+    user = get_auth_object(request)
+    #if "_id" in httpsession:
+    if user is not None:
+        #user = connection.User.find_one({'_id': ObjectId(httpsession['_id'])})
         try:
             # TODO get data owned by  user
             user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
@@ -203,8 +304,10 @@ def get_user(request):
     Return user information
     '''
     httpsession = request.session
-    if "_id" in httpsession:
-        user = connection.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
+    user = get_auth_user(request)
+    if user is not None:
+    #if "_id" in httpsession:
+        #user = connection.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
         projects = []
         try:
             user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
@@ -260,6 +363,12 @@ def upload_remote_data(request):
 
     try:
         options['project'] = request.params.getone('project')
+        user = get_auth_user(request)
+        if user is None:
+            raise HTTPForbidden()
+        project = connection.Project.find_one({"_id": ObjectId(options['project'])})
+        if project is None or not can_update_project(user, project):
+            raise HttpForbidden()
     except Exception:
         options['project'] = None
 
@@ -334,19 +443,24 @@ def data(request):
     '''
     Get or delete a dataset
     '''
+    user = get_auth_user(request)
+    did = request.matchdict['uid']
+    dataset = connection.ProjectData.find_one({"_id": ObjectId(did)})
+    if dataset is None:
+        return HTTPNotFound()
+    if not can_update_dataset(user, dataset):
+        return HTTPForbidden()
+
     if request.method == 'DELETE':
         infile = request.matchdict['uid']
         ObjectManager.delete(infile)
         return {}
     if request.method == 'GET':
-        did = request.matchdict['uid']
-        dataset = connection.ProjectData.find_one({"_id": ObjectId(did)})
         projectname = connection.Project.find_one({"_id": dataset['project']})
         dataset['project'] = projectname['name']
         dataset['rootpath'] = ObjectManager.get_relative_file_path(dataset['_id'])
-        manager = ObjectManager()
         return Response(json.dumps({'dataset': dataset, 'history':
-            manager.history(did)}, default=json_util.default))
+            ObjectManager.history(did)}, default=json_util.default))
 
 
 @view_config(route_name='upload_data', renderer='json')
@@ -357,6 +471,14 @@ def upload_data(request):
     options = {}
     try:
         options['project'] = request.params.getone('project')
+        user = get_auth_user(request)
+        if user is None:
+            raise HTTPForbidden()
+        project = connection.Project.find_one({"_id": ObjectId(options['project'])})
+        if project is None or not can_update_project(user, project):
+            raise HttpForbidden()
+
+        # TODO check I have rights on project
     except Exception:
         options['project'] = None
 
