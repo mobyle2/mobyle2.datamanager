@@ -336,8 +336,7 @@ def data(request):
     '''
     if request.method == 'DELETE':
         infile = request.matchdict['uid']
-        manager = ObjectManager()
-        manager.delete(infile)
+        ObjectManager.delete(infile)
         return {}
     if request.method == 'GET':
         did = request.matchdict['uid']
@@ -439,8 +438,7 @@ def write_blob(data, info, options):
     if options['group']:
         logging.debug('Should group data')
 
-    mngr = ObjectManager()
-    dataset = mngr.store(info['name'], file_path, options)
+    dataset = ObjectManager.store(info['name'], file_path, options)
     if dataset['status'] == ObjectManager.UNCOMPRESS:
         # delay decompression
         from mobyle.data.manager.background import uncompress
