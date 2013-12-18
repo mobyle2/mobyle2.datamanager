@@ -4,7 +4,7 @@ from pyramid.view import view_config
 
 from pyramid.httpexceptions import HTTPNotFound, HTTPForbidden
 from pyramid.renderers import render_to_response
-from pyramid.response import Response
+from pyramid.response import Response, FileResponse
 from pyramid.settings import asbool
 
 import json
@@ -187,11 +187,12 @@ def data_token(request):
 @view_config(route_name='data_download', renderer='json')
 def data_download(request):
     token = request.matchdict['token']
-    file_path = request.matchdict['file'].join('/')
+    file_path = ','.join(str(i) for i in request.matchdict['file'])
+    #file_path = request.matchdict['file'].join('/')
     logging.debug("request to download path "+file_path+" for token " \
                   + token)
     data_token = connection.Token.find_one({"token": token})
-    if data.token.check_validatity():
+    if data_token.check_validity(False):
         data_uid = data_token['data']['id']
         dataset = connection.ProjectData.find_one({"_id": ObjectId(data_uid)})
         # Get full path to the file
@@ -199,7 +200,7 @@ def data_download(request):
         mime_type = 'application/'+dataset['data']['format']
         response = FileResponse(file_path,
                                 request=request,
-                                content_type=mime_type)
+                                content_type=str(mime_type))
         return response
 
     else:
