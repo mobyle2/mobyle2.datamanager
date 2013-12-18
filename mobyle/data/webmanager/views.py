@@ -232,7 +232,7 @@ def download(request):
         raise HttpNotFound()
     if not dataset['public']:
         user = get_auth_user(request)
-        if not can_read_dataset(user,dataset):
+        if not user or not can_read_dataset(user,dataset):
             raise HTTPForbidden()
     file_path = os.path.join(dataset.get_file_path(),
                             dataset['data']['path'])
