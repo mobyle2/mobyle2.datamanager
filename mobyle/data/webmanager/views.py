@@ -30,7 +30,7 @@ from mobyle.data.manager.background import download, upload
 
 from  mobyle.data.manager.pluginmanager import DataPluginManager
 
-from mf.views import MF_EDIT
+from mf.views import MF_EDIT, MF_READ
 
 class Protocols:
     _BASE_PROTOCOLS = None
@@ -147,6 +147,42 @@ def can_update_project(user, project):
             allowed = True
     return allowed
 
+
+def can_read_project(user, project):
+    """
+    Checks that user read elements of a project
+
+    :param user: Logged user
+    :type user: User
+    :param project: Project to read
+    :type project: Project
+    :return: bool
+    """
+    project_filter = project.my(MF_READ, None, user['email'])
+    allowed = False
+    mffilter = {}
+    if project_filter is not None:
+        mffilter['_id'] = project['_id']
+        obj = connection.Project.find_one(mffilter)
+        if obj is not None:
+            allowed = True
+    return allowed
+
+def can_read_dataset(user, data):
+    """
+    Checks that user can read a dataset in a project
+
+    :param user: Logged user
+    :type user: User
+    :param data: ProjectData to read
+    :type data: ProjectData
+    :return: bool
+    """
+    project = connection.Project.find_one({"_id": data['project']})
+    if project is None:
+        return False
+    return can_read_project(user, project)
+
 def can_update_dataset(user, data):
     """
     Checks that user can modify or delete a dataset in a project
@@ -184,6 +220,31 @@ def data_token(request):
                                     lifetime)
     return {'token': token}
 
+@view_config(route_name='download')
+def download(request):
+    """
+    Manage the download of a dataset for public datasets or user only datasets
+    """
+    data_uid = request.matchdict['uid']
+    #file_path = ','.join(str(i) for i in request.matchdict['file'])
+    dataset = connection.ProjectData.find_one({"_id": ObjectId(data_uid)})
+    if dataset is None:
+        raise HttpNotFound()
+    if not dataset['public']:
+        user = get_auth_user(request)
+        if not user or not can_read_dataset(user,dataset):
+            raise HTTPForbidden()
+    file_path = os.path.join(dataset.get_file_path(),
+                            dataset['data']['path'])
+    if not os.path.exists(file_path):
+        raise HTTPNotFound()
+    logging.error("request to download file "+file_path)
+    mime_type = 'application/'+dataset['data']['format']
+    response = FileResponse(file_path,
+                                request=request,
+                                content_type=str(mime_type))
+    return response
+
 @view_config(route_name='data_download', renderer='json')
 def data_download(request):
     token = request.matchdict['token']
@@ -205,6 +266,8 @@ def data_download(request):
 
     else:
         raise HTTPForbidden()
+
+
 
 @view_config(route_name='my.json', renderer='json')
 def my_json(request):
