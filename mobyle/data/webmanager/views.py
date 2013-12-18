@@ -30,6 +30,8 @@ from mobyle.data.manager.background import download, upload
 
 from  mobyle.data.manager.pluginmanager import DataPluginManager
 
+from mf.views import MF_EDIT
+
 class Protocols:
     _BASE_PROTOCOLS = None
 
@@ -137,6 +139,7 @@ def can_update_project(user, project):
     """
     project_filter = project.my(MF_EDIT, None, user['email'])
     allowed = False
+    mffilter = {}
     if project_filter is not None:
         mffilter['_id'] = project['_id']
         obj = connection.Project.find_one(mffilter)
@@ -240,7 +243,7 @@ def my(request):
     projectdata = {}
     httpsession = request.session
     projectsname = {}
-    user = get_auth_object(request)
+    user = get_auth_user(request)
     #if "_id" in httpsession:
     if user is not None:
         #user = connection.User.find_one({'_id': ObjectId(httpsession['_id'])})
@@ -478,8 +481,8 @@ def upload_data(request):
         if project is None or not can_update_project(user, project):
             raise HttpForbidden()
 
-        # TODO check I have rights on project
-    except Exception:
+    except Exception as e:
+        logging.error(str(e))
         options['project'] = None
 
     try:
@@ -604,8 +607,8 @@ def handle_file_upload(request, options):
                 '/data?key=' + urllib.quote(blob_key, '')
             if not 'url' in result:
                 result['url'] = request.host_url +\
-                    '/' + options['project'] + '/' + urllib.quote(
-                        result['name'].encode('utf-8'), '')
+                    '/' + options['project'] + '/' +\
+                    urllib.quote(result['name'].encode('utf-8'), '')
         results.append(result)
     return results
 
