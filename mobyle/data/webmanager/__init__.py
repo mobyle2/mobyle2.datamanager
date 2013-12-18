@@ -27,8 +27,7 @@ def data_include(config):
 
 def objectmanager_include(config):
     from  mobyle.common.objectmanager import ObjectManager
-    objectmanager = ObjectManager()
-    config.add_static_view(name='download', path=objectmanager.get_storage_path())
+    config.add_route('download','/download/{uid}')
 
 
 def main(global_config, **settings):
