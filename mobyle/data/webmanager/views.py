@@ -4,7 +4,7 @@ from pyramid.view import view_config
 
 from pyramid.httpexceptions import HTTPNotFound, HTTPForbidden
 from pyramid.renderers import render_to_response
-from pyramid.response import Response
+from pyramid.response import Response, FileResponse
 from pyramid.settings import asbool
 
 import json
@@ -29,6 +29,8 @@ from bson import ObjectId
 from mobyle.data.manager.background import download, upload
 
 from  mobyle.data.manager.pluginmanager import DataPluginManager
+
+from mf.views import MF_EDIT
 
 class Protocols:
     _BASE_PROTOCOLS = None
@@ -137,6 +139,7 @@ def can_update_project(user, project):
     """
     project_filter = project.my(MF_EDIT, None, user['email'])
     allowed = False
+    mffilter = {}
     if project_filter is not None:
         mffilter['_id'] = project['_id']
         obj = connection.Project.find_one(mffilter)
@@ -184,11 +187,12 @@ def data_token(request):
 @view_config(route_name='data_download', renderer='json')
 def data_download(request):
     token = request.matchdict['token']
-    file_path = request.matchdict['file'].join('/')
+    file_path = ','.join(str(i) for i in request.matchdict['file'])
+    #file_path = request.matchdict['file'].join('/')
     logging.debug("request to download path "+file_path+" for token " \
                   + token)
     data_token = connection.Token.find_one({"token": token})
-    if data.token.check_validatity():
+    if data_token.check_validity(False):
         data_uid = data_token['data']['id']
         dataset = connection.ProjectData.find_one({"_id": ObjectId(data_uid)})
         # Get full path to the file
@@ -196,7 +200,7 @@ def data_download(request):
         mime_type = 'application/'+dataset['data']['format']
         response = FileResponse(file_path,
                                 request=request,
-                                content_type=mime_type)
+                                content_type=str(mime_type))
         return response
 
     else:
@@ -240,7 +244,7 @@ def my(request):
     projectdata = {}
     httpsession = request.session
     projectsname = {}
-    user = get_auth_object(request)
+    user = get_auth_user(request)
     #if "_id" in httpsession:
     if user is not None:
         #user = connection.User.find_one({'_id': ObjectId(httpsession['_id'])})
@@ -478,8 +482,8 @@ def upload_data(request):
         if project is None or not can_update_project(user, project):
             raise HttpForbidden()
 
-        # TODO check I have rights on project
-    except Exception:
+    except Exception as e:
+        logging.error(str(e))
         options['project'] = None
 
     try:
@@ -604,8 +608,8 @@ def handle_file_upload(request, options):
                 '/data?key=' + urllib.quote(blob_key, '')
             if not 'url' in result:
                 result['url'] = request.host_url +\
-                    '/' + options['project'] + '/' + urllib.quote(
-                        result['name'].encode('utf-8'), '')
+                    '/' + options['project'] + '/' +\
+                    urllib.quote(result['name'].encode('utf-8'), '')
         results.append(result)
     return results
 

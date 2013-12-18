@@ -110,7 +110,7 @@ $('.datasetmodal').click(function(e) {
 			infoHtml+="<div><h3>Files</h3>";
 			$.each(data['dataset']['data']['value'], function(key,value) {
 				if('path' in value) {
-                    fpath = data['dataset']['rootpath']+"/"+value['path']
+                    var fpath = data['dataset']['rootpath']+"/"+value['path'];
 					infoHtml += "<div>";
                     infoHtml += basename(value['path']) ;
                     infoHtml += " ("+bytesToSize(value['size'])+")";
@@ -121,8 +121,16 @@ $('.datasetmodal').click(function(e) {
 					infoHtml += "<div>" + value['value'] + "</div>";
 				}
 			});
+
+            infoHtml += "<button class=\"btn btn-info btn-share\"  data-uid=\""+uid+"\" data-path=\"\"><li class=\"icon-share\"></li>Share</button>";
+
 			infoHtml += "</div>";
 		}
+        else {
+            var fpath = data['dataset']['data']['path']; 
+            infoHtml += "<button class=\"btn btn-info btn-share\" data-uid=\""+uid+"\" data-path=\""+fpath+"\"><li class=\"icon-share\"></li>Share</button>";
+        }
+                infoHtml += '<div id="token-share"></div>';
                 infoHtml += '<h3>History</h3>'
                 infoHtml += '<table class="table table-striped">';
                 infoHtml += '<thead><tr><th>Date</th><th>Message</th></tr></thead>';
@@ -173,6 +181,23 @@ $(document).on("click",'.download', function(e) {
         uid = $(this).attr('data-uid');
         window.open("${static_url(downloadpath, request)}/"+ uid);
 });
+
+$(document).on("click",'.btn-share', function(e) {
+        var uid = $(this).attr('data-uid');
+        var file_path = $(this).attr('data-path');
+        var token_url = "${route_url('main',request)}data/"+ uid + "/token";
+        $.getJSON(token_url,function(data) {
+            if(file_path=="") {
+                var download_url = "${route_url('main',request)}data-download/"+data['token']+"/";
+               $("#token-share").html("You can now share this file for public download with the following url for the next 24 hours:<br/>"+download_url+"</a>/file_name_or_pat");
+            }
+            else {
+                var download_url = "${route_url('main',request)}data-download/"+data['token']+"/"+file_path; 
+                $("#token-share").html("You can now share this file for public download with the following url for the next 24 hours:<br/><a href=\""+download_url+"\">"+download_url+"</a>");
+            }
+        });
+});
+
 
 $('.update').click(function(e) {
         uid = $(this).attr('data-uid');
