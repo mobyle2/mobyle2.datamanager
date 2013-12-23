@@ -74,6 +74,7 @@ src="${static_url('mobyle.data.webmanager:static/javascript-templates/tmpl.min.j
 
   </div>
   <script src="${static_url('mobyle.data.webmanager:static/bootstrap/js/bootstrap.min.js',request)}"></script>
+  <script src="${static_url('mobyle.data.webmanager:static//mobyle-datamanager.js',request)}"></script>
 
   <script>
   $(document).ready(function() {

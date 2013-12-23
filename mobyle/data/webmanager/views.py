@@ -178,6 +178,8 @@ def can_read_dataset(user, data):
     :type data: ProjectData
     :return: bool
     """
+    if 'public' in data and data['public']:
+        return True
     project = connection.Project.find_one({"_id": data['project']})
     if project is None:
         return False
@@ -537,14 +539,17 @@ def data(request):
     dataset = connection.ProjectData.find_one({"_id": ObjectId(did)})
     if dataset is None:
         return HTTPNotFound()
-    if not can_update_dataset(user, dataset):
-        return HTTPForbidden()
 
     if request.method == 'DELETE':
+        if not can_update_dataset(user, dataset):
+            return HTTPForbidden()
+
         infile = request.matchdict['uid']
         ObjectManager.delete(infile)
         return {}
     if request.method == 'GET':
+        if not can_read_dataset(user, dataset):
+            return HTTPForbidden()
         projectname = connection.Project.find_one({"_id": dataset['project']})
         dataset['project'] = projectname['name']
         dataset['rootpath'] = ObjectManager.get_relative_file_path(dataset['_id'])
