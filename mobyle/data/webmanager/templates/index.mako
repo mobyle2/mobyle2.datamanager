@@ -31,16 +31,13 @@
     % endif
     <div class="control-group">
     <label>Data type</label>
-    <select name="type">
-      <option value="sequence">Sequence</option>
-    </select>
+    <input id="type_selection" name="type" type="text" data-provide="typeahead"/>
     <span class="help-block">Type of the data</span>
+    <span class="help-block" id="type_selection_desc"></span>
     <label>Data format</label>
-    <select name="format">
-      <option value="auto">Auto-detect</option>
-      <option value="fasta">Fasta</option>
-    </select>
+    <input id="format_selection" name="format" type="text" data-provide="typeahead"/>
     <span class="help-block">Format of the data</span>
+    <span class="help-block" id="format_selection_desc"></span>
 
     </div>
     <div class="control-group">
@@ -258,4 +255,52 @@
         </td>
     </tr>
 {% } %}
+</script>
+
+<script>
+$(function() {
+   var edam_types = { 'EDAM:123' : 'sequence', 'EDAM:456': 'something' };
+   var edam_formats = { 'EDAM:323' : 'fasta', 'EDAM:356': 'text' };
+
+   var t_edams = []
+   for(edam in edam_types) {
+       t_edams.push(edam+"|"+edam_types[edam]);
+   }
+   var f_edams = ["auto"]
+   for(edam in edam_formats) {
+       f_edams.push(edam+"|"+edam_formats[edam]);
+   }
+
+
+
+   $('#type_selection').typeahead({
+      source: t_edams,
+      updater: function (item) {
+        var elts = item.split('|');
+        $("#type_selection_desc").html("<span class=\"label label-info\">"+item+"</span>");
+        return elts[0];
+      },
+      matcher: function(item) {
+        return item.indexOf(this.query) != -1;
+      },
+      minLength: 3
+   });
+
+   $('#format_selection').typeahead({
+      source: f_edams,
+      updater: function (item) {
+        var elts = item.split('|');
+        $("#format_selection_desc").html("<span class=\"label label-info\">"+item+"</span>");
+        return elts[0];
+      },
+      matcher: function(item) {
+        return item.indexOf(this.query) != -1;
+      },
+      minLength: 3
+   });
+
+
+
+});
+
 </script>
