@@ -64,7 +64,7 @@ projects["${id}"] = "${projectsname[id]}";
 % endfor
 
 $.getJSON("${request.route_url('public.json')}",function(data) {
-    facets = {'projects': {}, 'tags': {}}
+    facets = {'projects': {}, 'tags': {}, 'types': {}, 'formats': {}}
     var data = JSON.parse(data);
     var publiclist = $(".datasets .table");
     var publiclisthtml = "";
@@ -84,12 +84,26 @@ $.getJSON("${request.route_url('public.json')}",function(data) {
             }
             facets['tags'][dataset['tags'][i]]++;
         }
-        publiclisthtml += "<tr data-uid=\""+dataset['_id']['$oid']+"\">";
+
+        if (facets['types'][dataset['data']['type']] == undefined) {
+            facets['types'][dataset['data']['type']] = 0;
+        }
+        facets['types'][dataset['data']['type']]++;
+
+        if (facets['formats'][dataset['data']['format']] == undefined) {
+            facets['formats'][dataset['data']['format']] = 0;
+        }
+        facets['formats'][dataset['data']['format']]++;
+
+
+        var uid = dataset['_id']['$oid'];
+        publiclisthtml += "<tr data-uid=\""+uid+"\">";
         publiclisthtml += "<td>"+projectname+"</td>";
         publiclisthtml += "<td>"+dataset['name']+"</td>";
         publiclisthtml += "<td>"+dataset['data']['type']+"/"+dataset['data']['format']+"</td>";
         publiclisthtml += "<td>"+dataset['data']['size']+"</td>";
-        publiclisthtml +="<td><a class=\"btn btn-info datasetmodal\" data-uid=\""+dataset['_id']['$oid']+"\" role=\"button\" href=\"#datasetModal\"><li class=\"icon-eye-open\"> </li></a></td>";
+        publiclisthtml +="<td><a class=\"btn btn-info datasetmodal\" data-uid=\""+uid+"\" role=\"button\" href=\"#datasetModal\"><li class=\"icon-eye-open\"> </li></a>";
+        publiclisthtml += '<button class="btn btn-info download" data-uid="'+uid+'"><li class="icon-download"> </li></button></td>';
     }
     publiclist.append(publiclisthtml);
     var facetdiv = $(".facets");
@@ -103,6 +117,16 @@ $.getJSON("${request.route_url('public.json')}",function(data) {
     for(tag in facets['tags']) {
         facetstable += "<tr><td>"+tag+" ("+facets['tags'][tag]+")</td></tr>";
     }
+    facetstable += "<tr><td><h5>Types</h5></td></tr>";
+    for(type in facets['types']) {
+        facetstable += "<tr><td>"+type+" ("+facets['types'][type]+")</td></tr>";
+    }
+    facetstable += "<tr><td><h5>Formats</h5></td></tr>";
+    for(format in facets['formats']) {
+        facetstable += "<tr><td>"+format+" ("+facets['formats'][format]+")</td></tr>";
+    }
+
+
     facetstable += '</table>';
     facetdiv.html(facetstable);
 
