@@ -269,7 +269,7 @@ def data_download(request):
     else:
         raise HTTPForbidden()
 
-@view_config(route_name='public.json', renderer='json')
+@view_config(route_name='public.json',renderer='json')
 def public_json(request):
     '''
     Get public datasets in JSON format
@@ -278,7 +278,9 @@ def public_json(request):
     projectdata = connection.ProjectData.find({"public": True})
     for data in projectdata:
         datasets.append(data)
-    return json.dumps(datasets, default=json_util.default)
+    return Response(json.dumps(datasets,
+                    default=json_util.default),content_type="application/json")
+
 
 @view_config(route_name='public', renderer='mobyle.data.webmanager:templates/public.mako')
 def public(request):

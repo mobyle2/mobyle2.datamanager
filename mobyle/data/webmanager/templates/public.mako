@@ -65,7 +65,7 @@ projects["${id}"] = "${projectsname[id]}";
 
 $.getJSON("${request.route_url('public.json')}",function(data) {
     facets = {'projects': {}, 'tags': {}, 'types': {}, 'formats': {}}
-    var data = JSON.parse(data);
+    //var data = JSON.parse(data);
     var publiclist = $(".datasets .table");
     var publiclisthtml = "";
     for(var d=0;d<data.length;d++) {
