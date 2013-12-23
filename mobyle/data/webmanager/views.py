@@ -240,7 +240,7 @@ def download(request):
                             dataset['data']['path'])
     if not os.path.exists(file_path):
         raise HTTPNotFound()
-    logging.error("request to download file "+file_path)
+    logging.debug("request to download file "+file_path)
     mime_type = 'application/'+dataset['data']['format']
     response = FileResponse(file_path,
                                 request=request,
