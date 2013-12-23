@@ -18,6 +18,7 @@ DataPluginManager.get_manager()
  <div class="span3 facets">
  </div>
  <div class="span9 datasets">
+ <div id="filter"></div>
  <table class="table">
  <tr><th>Project</th><th>Name</th><th>Type/Format</th><th>Size</th><th></th></tr>
 </table>
@@ -63,42 +64,22 @@ var projects = {};
 projects["${id}"] = "${projectsname[id]}";
 % endfor
 
-$.getJSON("${request.route_url('public.json')}",function(data) {
-    facets = {'projects': {}, 'tags': {}, 'types': {}, 'formats': {}}
+function get_public_datasets(key,value) {
+var filter = "";
+if(key!=null && value!=null) {
+  filter = "?filter="+key+"&"+key+"="+value;
+}
+$.getJSON("${request.route_url('public.json')}"+filter,function(data) {
     //var data = JSON.parse(data);
     var publiclist = $(".datasets .table");
+    publiclist.html("<tr><th>Project</th><th>Name</th><th>Type/Format</th><th>Size</th><th></th></tr>");
     var publiclisthtml = "";
     for(var d=0;d<data.length;d++) {
         dataset = data[d];
-        if(dataset['status']!=2) {
-            continue;
-        }
-        projectname = projects[dataset['project']['$oid']];
-        if (facets['projects'][projectname] == undefined) {
-            facets['projects'][projectname] = 0;
-        }
-        facets['projects'][projectname]++;
-        for(var i=0;i<dataset['tags'].length;i++) {
-            if (facets['tags'][dataset['tags'][i]] == undefined) {
-            facets['tags'][dataset['tags'][i]] = 0;
-            }
-            facets['tags'][dataset['tags'][i]]++;
-        }
-
-        if (facets['types'][dataset['data']['type']] == undefined) {
-            facets['types'][dataset['data']['type']] = 0;
-        }
-        facets['types'][dataset['data']['type']]++;
-
-        if (facets['formats'][dataset['data']['format']] == undefined) {
-            facets['formats'][dataset['data']['format']] = 0;
-        }
-        facets['formats'][dataset['data']['format']]++;
-
 
         var uid = dataset['_id']['$oid'];
         publiclisthtml += "<tr data-uid=\""+uid+"\">";
-        publiclisthtml += "<td>"+projectname+"</td>";
+        publiclisthtml += "<td>"+projects[dataset['project']['$oid']]+"</td>";
         publiclisthtml += "<td>"+dataset['name']+"</td>";
         publiclisthtml += "<td>"+dataset['data']['type']+"/"+dataset['data']['format']+"</td>";
         publiclisthtml += "<td>"+dataset['data']['size']+"</td>";
@@ -106,29 +87,21 @@ $.getJSON("${request.route_url('public.json')}",function(data) {
         publiclisthtml += '<button class="btn btn-info download" data-uid="'+uid+'"><li class="icon-download"> </li></button></td>';
     }
     publiclist.append(publiclisthtml);
-    var facetdiv = $(".facets");
-    var facetstable = "";
-    facetstable += '<table class="table">';
-    facetstable += "<tr><td><h5>Projects</h5></td></tr>";
-    for(project in facets['projects']) {
-        facetstable += "<tr><td>"+project+" ("+facets['projects'][project]+")</td></tr>";
-    }
-    facetstable += "<tr><td><h5>Tags</h5></td></tr>";
-    for(tag in facets['tags']) {
-        facetstable += "<tr><td>"+tag+" ("+facets['tags'][tag]+")</td></tr>";
-    }
-    facetstable += "<tr><td><h5>Types</h5></td></tr>";
-    for(type in facets['types']) {
-        facetstable += "<tr><td>"+type+" ("+facets['types'][type]+")</td></tr>";
-    }
-    facetstable += "<tr><td><h5>Formats</h5></td></tr>";
-    for(format in facets['formats']) {
-        facetstable += "<tr><td>"+format+" ("+facets['formats'][format]+")</td></tr>";
-    }
+
+    var facets = getFacets(data, projects);
+    showFacets(facets);
+
+});
+}
 
 
-    facetstable += '</table>';
-    facetdiv.html(facetstable);
+get_public_datasets(null,null);
+
+$(document).on("click",".filter", function(e) {
+  var key = $(this).attr("data-key");
+  var value = $(this).attr("data-uid");
+  get_public_datasets(key,value);
+  $("#filter").html("<ul class=\"breadcrumb\"><li>"+key+" = "+value+"</li></ul>");
 
 });
 

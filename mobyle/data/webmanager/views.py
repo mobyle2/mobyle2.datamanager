@@ -275,9 +275,15 @@ def public_json(request):
     Get public datasets in JSON format
     '''
     datasets = []
-    projectdata = connection.ProjectData.find({"public": True})
+    
+    datafilter = { 'public': True }
+    datafilter = add_filter(datafilter, request)
+
+    projectdata = connection.ProjectData.find(datafilter)
+
     for data in projectdata:
-        datasets.append(data)
+        if data['status'] == 2:
+            datasets.append(data)
     return Response(json.dumps(datasets,
                     default=json_util.default),content_type="application/json")
 
@@ -303,14 +309,16 @@ def my_json(request):
     try:
         datasets = []
         user = get_auth_user(request)
-        #user = connection.User.find_one({'apikey': request.params.getone("apikey")})
         if user:
             try:
                 user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
                 projects = []
                 for project in user_projects:
-                    projects.append(project)
-                projectdata = connection.ProjectData.find({"project": {"$in": projects}})
+                    projects.append(project['_id'])
+
+                dfilter = {"project" : {"$in": projects}}
+                dfilter = add_filter(dfilter, request)
+                projectdata = connection.ProjectData.find(dfilter)
                 # TODO get user owned datasets
                 #projectdata = connection.ProjectData.find()
             except Exception as e:
@@ -321,7 +329,33 @@ def my_json(request):
                 datasets.append(data)
     except Exception:
         datasets = []
-    return json.dumps(datasets, default=json_util.default)
+    return Response(json.dumps(datasets,
+                        default=json_util.default),
+                        content_type="application/json")
+
+def add_filter(dfilter, request):
+    '''
+    Check if request requires a specific filter on datasets
+
+    :param dfilter: pre-existing filter
+    :type dfilter: dict
+    :param request: Http pyramid request
+    :type request: Pyramid Request
+    :return: dict of filter
+    '''
+    try:
+        key = request.params.getone('filter')
+        value = request.params.getone(key)
+        if key == 'project':
+            value = ObjectId(value)
+        if key == 'type' or key == 'format':
+            key = 'data.'+key
+        dfilter[key] = value
+
+    except Exception:
+        logging.debug("no filter applied")
+    return dfilter
+
 
 
 @view_config(route_name='my', renderer='mobyle.data.webmanager:templates/my.mako')
