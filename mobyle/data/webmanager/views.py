@@ -241,7 +241,10 @@ def download(request):
     if not os.path.exists(file_path):
         raise HTTPNotFound()
     logging.debug("request to download file "+file_path)
-    mime_type = 'application/'+dataset['data']['format']
+    if dataset['data']['format'] is None:
+        mime_type = "text/plain"
+    else:
+        mime_type = 'application/'+dataset['data']['format']
     response = FileResponse(file_path,
                                 request=request,
                                 content_type=str(mime_type))
@@ -260,7 +263,10 @@ def data_download(request):
         dataset = connection.ProjectData.find_one({"_id": ObjectId(data_uid)})
         # Get full path to the file
         file_path = os.path.join(dataset.get_file_path(), file_path)
-        mime_type = 'application/'+dataset['data']['format']
+        if dataset['data']['format'] is None:
+            mime_type = "text/plain"
+        else:
+            mime_type = 'application/'+dataset['data']['format']
         response = FileResponse(file_path,
                                 request=request,
                                 content_type=str(mime_type))
