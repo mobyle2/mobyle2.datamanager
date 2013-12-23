@@ -64,7 +64,11 @@ src="${static_url('mobyle.data.webmanager:static/javascript-templates/tmpl.min.j
   </div>
   % endif
 
-<ul class="offset1 nav nav-tabs"><li><a href="${route_url('main',request)}" ><h2>Add datasets</h2></a></li><li><a href="${route_url('my',request)}" ><h2>Manage datasets</h2></a></li></ul>
+<ul class="offset1 nav nav-tabs">
+<li><a href="${route_url('main',request)}"><h2>Add datasets</h2></a></li>
+<li><a href="${route_url('my',request)}"><h2>Manage datasets</h2></a></li>
+<li><a href="${route_url('public',request)}"><h2>Public datasets</h2></a></li>
+</ul>
 
     ${next.body()}
 

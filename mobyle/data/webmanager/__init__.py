@@ -14,6 +14,8 @@ def data_include(config):
     config.add_route('logout', '/logout')
     config.add_route('my', '/my')
     config.add_route('my.json', '/my.json')
+    config.add_route('public', '/public')
+    config.add_route('public.json', '/public.json')
     config.add_route('data', '/data/{uid}')
     config.add_route('data_token','/data/{uid}/token')
     config.add_route('data_download','data-download/{token}/*file')

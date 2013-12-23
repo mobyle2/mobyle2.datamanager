@@ -267,6 +267,28 @@ def data_download(request):
     else:
         raise HTTPForbidden()
 
+@view_config(route_name='public.json', renderer='json')
+def public_json(request):
+    '''
+    Get public datasets in JSON format
+    '''
+    datasets = []
+    projectdata = connection.ProjectData.find({"public": True})
+    for data in projectdata:
+        datasets.append(data)
+    return json.dumps(datasets, default=json_util.default)
+
+@view_config(route_name='public', renderer='mobyle.data.webmanager:templates/public.mako')
+def public(request):
+    '''
+    View listing of public datasets
+    '''
+    # Datasets will be loaded asynchronously to avoid page loading time
+    projects = connection.Project.find({},{'name': 1})
+    projectsname = {}
+    for project in projects:
+        projectsname[str(project['_id'])] = project['name']
+    return {'projectsname': projectsname}
 
 
 @view_config(route_name='my.json', renderer='json')
