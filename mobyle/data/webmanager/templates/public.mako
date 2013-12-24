@@ -56,7 +56,8 @@ $(function(){
 
 $(document).on("click",'.download', function(e) {
         uid = $(this).attr('data-uid');
-        window.open("${request.route_url('main')}download/"+ uid);
+        fpath = $(this).attr('data-path');
+        window.open("${request.route_url('main')}download/"+ uid + '/' + fpath);
 });
 
 var projects = {};
@@ -84,7 +85,12 @@ $.getJSON("${request.route_url('public.json')}"+filter,function(data) {
         publiclisthtml += "<td>"+dataset['data']['type']+"/"+dataset['data']['format']+"</td>";
         publiclisthtml += "<td>"+dataset['data']['size']+"</td>";
         publiclisthtml +="<td><a class=\"btn btn-info datasetmodal\" data-uid=\""+uid+"\" role=\"button\" href=\"#datasetModal\"><li class=\"icon-eye-open\"> </li></a>";
-        publiclisthtml += '<button class="btn btn-info download" data-uid="'+uid+'"><li class="icon-download"> </li></button></td>';
+        if(dataset['data']['path']!=undefined) {
+            publiclisthtml += '<button class="btn btn-info download"' +
+                          ' data-uid="'+uid+'"'+
+                          ' data-path="'+dataset['data']['path']+'">' +
+                          '<li class="icon-download"> </li></button></td>';
+        }
     }
     publiclist.append(publiclisthtml);
 

@@ -95,7 +95,8 @@ $('.btn-data-plugin').click(function(e) {
 
 $(document).on("click",'.download', function(e) {
         uid = $(this).attr('data-uid');
-        window.open("${request.route_url('main')}download/"+ uid);
+        fpath = $(this).attr('data-path');
+        window.open("${request.route_url('main')}download/"+ uid + "/" + fpath);
 });
 
 $(document).on("click",'.btn-share', function(e) {
@@ -171,9 +172,10 @@ $.getJSON("${request.route_url('my.json')}"+filter,function(data) {
                         role="button" href="#datasetModal"> \
                         <li class="icon-eye-open"> </li></a>';
             if(dataset['data']['path']!=undefined) {
-                actions += '<button class="btn btn-info download" \
-                            data-uid="'+dataset['_id']['$oid']+'"> \
-                            <li class="icon-download"> </li></button>';
+                actions += "<button class=\"btn btn-info download\"" +
+                           " data-uid=\""+dataset['_id']['$oid']+"\"" +
+                           " data-path=\""+dataset['data']['path']+"\">" +
+                           "<li class=\"icon-download\"> </li></button>";
             }
             actions += '<button class="btn btn-info update" \
                         data-uid="'+dataset['_id']['$oid']+'"> \

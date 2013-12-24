@@ -23,20 +23,26 @@ function showDataSet(uid, url, mymodal, isowner) {
         }
         if('value' in data['dataset']['data'] && $.isArray(data['dataset']['data']['value'])) {
             // This is a ListData
-            infoHtml+="<div><h3>Files</h3>";
+            infoHtml += "<div><h3>Files</h3>";
+            infoHtml += "<table class=\"table\">";
             $.each(data['dataset']['data']['value'], function(key,value) {
+                infoHtml += "<tr>";
                 if('path' in value) {
-                    var fpath = data['dataset']['rootpath']+"/"+value['path'];
-                    infoHtml += "<div>";
-                    infoHtml += basename(value['path']) ;
-                    infoHtml += " ("+bytesToSize(value['size'])+")";
-                    infoHtml += "<button class=\"btn btn-info download\" data-uid=\""+fpath+"\"><li class=\"icon-download\"> </li></button>";
-                    infoHtml += "</div>";
+                    var fpath = value['path'];
+                    infoHtml += "<td>" + value['path'] + "</td>";
+                    infoHtml += "<td>" + bytesToSize(value['size']) + "</td>";
+                    infoHtml += "<td><button class=\"btn btn-info download\""+
+                                " data-uid=\""+uid+"\""+
+                                " data-path=\""+fpath+"\">"+
+                                "<li class=\"icon-download\">"+
+                                "</li></button></td>";
                 }
                 else {
-                    infoHtml += "<div>" + value['value'] + "</div>";
+                    infoHtml += "<td>" + value['value'] + "</td>";
                 }
+                infoHtml += "</tr>";
             });
+            infoHtml += "</table>";
             if(isowner) {
             infoHtml += "<button class=\"btn btn-info btn-share\" data-uid=\""+uid+"\" data-path=\"\"><li class=\"icon-share\"></li>Share</button>";
             }

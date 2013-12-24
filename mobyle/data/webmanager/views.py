@@ -223,7 +223,7 @@ def data_token(request):
     return {'token': token}
 
 @view_config(route_name='download')
-def download(request):
+def direct_download(request):
     """
     Manage the download of a dataset for public datasets or user only datasets
     """
@@ -236,8 +236,10 @@ def download(request):
         user = get_auth_user(request)
         if not user or not can_read_dataset(user,dataset):
             raise HTTPForbidden()
+    file_path = '/'.join(str(i) for i in request.matchdict['file'])
     file_path = os.path.join(dataset.get_file_path(),
-                            dataset['data']['path'])
+                            file_path)
+    logging.error("try to get "+file_path)
     if not os.path.exists(file_path):
         raise HTTPNotFound()
     logging.debug("request to download file "+file_path)
@@ -253,8 +255,7 @@ def download(request):
 @view_config(route_name='data_download', renderer='json')
 def data_download(request):
     token = request.matchdict['token']
-    file_path = ','.join(str(i) for i in request.matchdict['file'])
-    #file_path = request.matchdict['file'].join('/')
+    file_path = '/'.join(str(i) for i in request.matchdict['file'])
     logging.debug("request to download path "+file_path+" for token " \
                   + token)
     data_token = connection.Token.find_one({"token": token})
@@ -615,7 +616,8 @@ def upload_data(request):
             raise HttpForbidden()
 
     except Exception as e:
-        logging.error(str(e))
+        #logging.error(str(e))
+        raise HTTPForbidden()
         options['project'] = None
 
     try:
@@ -683,7 +685,7 @@ def write_blob(data, info, options):
     '''
     Write file content and store it as a dataset
     '''
-    if not options['project']:
+    if 'project' not in options:
         return None
 
     (out, file_path) = tempfile.mkstemp()

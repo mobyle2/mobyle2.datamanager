@@ -29,7 +29,7 @@ def data_include(config):
 
 def objectmanager_include(config):
     from  mobyle.common.objectmanager import ObjectManager
-    config.add_route('download','/download/{uid}')
+    config.add_route('download','/download/{uid}/*file')
     ObjectManager()
 
 

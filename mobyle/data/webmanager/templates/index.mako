@@ -11,7 +11,8 @@
         <h3>Please login first using your API key.</h3><br>
     </blockquote>
 % else:
-
+<div class="row">
+<div class="span6">
     <form id="remotefileupload" action="${request.route_url('upload_remote_data')}" method="POST">
     <legend>Remote dataset</legend>
     <div class="control-group">
@@ -78,7 +79,8 @@
     </button>
      
     </form>
-    <br>
+</div>
+<div class="span6">
     <!-- The file upload form used as target for the file upload widget -->
     <form id="fileupload" action="${request.route_url('upload_data')}" method="POST" enctype="multipart/form-data">
 
@@ -165,7 +167,8 @@
         <!-- The table listing the files available for upload/download -->
         <table role="presentation" class="table table-striped"><tbody class="files" data-toggle="modal-gallery" data-target="#modal-gallery"></tbody></table>
     </form>
-
+</div>
+</div>
 % endif
     <br>
 </div>
