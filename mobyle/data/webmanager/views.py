@@ -124,7 +124,7 @@ def get_auth_user(request):
         else:
             user = connection.User.find_one({'apikey': request.params.getone("apikey")})
     except Exception as e:
-        logging.error("Could not match user:" + str(e))
+        logging.info("Could not match user:" + str(e))
     return user
 
 def can_update_project(user, project):
