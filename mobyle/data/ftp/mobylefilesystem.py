@@ -169,8 +169,9 @@ class MobyleFileSystem(AbstractedFS):
         """Open a file returning its handler."""
         paths = filename.split('/')
         filename = paths[3]
-        datasetid = filename.split('_')[0]
-        filename = filename.split('_')[1]
+        file_uid = filename.split('_')
+        datasetid = file_uid[0]
+        filename = file_uid[1]
         filename = os.path.join(ObjectManager.get_file_path(datasetid),filename)
         logging.debug("## open " + filename)
         return open(filename, mode)

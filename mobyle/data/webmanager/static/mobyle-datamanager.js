@@ -12,8 +12,8 @@
 function showDataSet(uid, url, mymodal, isowner) {
         $.getJSON(url + uid,function(data) {
                 infoHtml = '<h2>'+data['dataset']['name']+' - '+data['dataset']['project']+'</h2>';
-                if(data['description']!=undefined) {
-                    infoHtml += "<div>"+data['description']+"</div>";
+                if(data['dataset']['description']!=undefined) {
+                    infoHtml += "<div>"+data['dataset']['description']+"</div>";
                 }
         if('size' in data['dataset']['data']) {
                     infoHtml += '<div><h3>Size: '+bytesToSize(data['dataset']['data']['size'])+'</h3></div>';

@@ -374,11 +374,8 @@ def my(request):
     httpsession = request.session
     projectsname = {}
     user = get_auth_user(request)
-    #if "_id" in httpsession:
     if user is not None:
-        #user = connection.User.find_one({'_id': ObjectId(httpsession['_id'])})
         try:
-            # TODO get data owned by  user
             user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
             projects = []
             for project in user_projects:
@@ -490,6 +487,16 @@ def upload_remote_data(request):
         options['type'] = None
 
     try:
+        options['name'] = request.params.getone('name')
+    except Exception:
+        options['name'] = None
+
+    try:
+        options['description'] = request.params.getone('description')
+    except Exception:
+        options['description'] = None
+
+    try:
         options['format'] = request.params.getone('format')
     except Exception:
         options['format'] = 'auto'
@@ -537,7 +544,11 @@ def upload_remote_data(request):
 
     #files = {}
     if options['id'] is None:
-        new_dataset = manager.add(options['rurl'].replace('/','_'), options)
+        if 'name' in options and options['name'] is not None:
+            rurl = options['name']
+        else:
+            rurl = options['rurl'].replace('/','_')
+        new_dataset = manager.add(rurl, options)
         if new_dataset is not None:
             options['id'] = str(new_dataset['_id'])
 
@@ -645,6 +656,17 @@ def upload_data(request):
     except Exception:
         options['type'] = None
 
+    try:
+        options['name'] = request.params.getone('name')
+    except Exception:
+        options['name'] = None
+
+    try:
+        options['description'] = request.params.getone('description')
+    except Exception:
+        options['description'] = None
+
+
     files = handle_file_upload(request, options)
     return {'files': files}
 
@@ -727,8 +749,11 @@ def handle_file_upload(request, options):
         if type(fieldStorage) is unicode:
             continue
         result = {}
-        result['name'] = re.sub(r'^.*\\', '',
-            fieldStorage.filename)
+        if 'name' in options and options['name'] is not None:
+            result['name'] = options['name']
+        else:
+            result['name'] = re.sub(r'^.*\\', '',
+                            fieldStorage.filename)
         result['type'] = fieldStorage.type
         result['size'] = get_file_size(fieldStorage.file)
         if validate(result):
