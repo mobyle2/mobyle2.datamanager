@@ -239,7 +239,6 @@ def direct_download(request):
     file_path = '/'.join(str(i) for i in request.matchdict['file'])
     file_path = os.path.join(dataset.get_file_path(),
                             file_path)
-    logging.error("try to get "+file_path)
     if not os.path.exists(file_path):
         raise HTTPNotFound()
     logging.debug("request to download file "+file_path)
