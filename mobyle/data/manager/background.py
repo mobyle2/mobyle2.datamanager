@@ -91,8 +91,8 @@ def download(furl, options=None):
                                             ObjectId(options['user_id'])})
             file_path = os.path.join(user['home_dir'], furl)
             # Only copy from user home directory
-            if user['home_dir'] and \
-            os.path.realpath(file_path).startswith(user['home_dir']):
+            if user['admin'] or (user['home_dir'] and \
+            os.path.realpath(file_path).startswith(user['home_dir'])):
                 # Do the copy or symlink
                 if options['protocol'] == 'symlink://':
                     # symlink
