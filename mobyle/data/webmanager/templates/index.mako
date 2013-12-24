@@ -23,6 +23,14 @@
     % endfor
     </select>
     </div>
+    <div class="control-group">
+    <label>Name (optional)</label>
+    <input id="name" name="name" type="text"/>
+    </div>
+    <div class="control-group">
+    <label>Description (optional)</label>
+    <textarea id="description" name="description" type="text"></textarea>
+    </div>
     <input type="hidden" class="apikey" name="apikey" value="${user['apikey']}"/>
     % if uid:
     <div class="control-group error">
@@ -94,17 +102,22 @@
     </select>
     </div>
     <div class="control-group">
+    <label>Name (optional)</label>
+    <input id="name" name="name" type="text"/>
+    </div>
+    <div class="control-group">
+    <label>Description (optional)</label>
+    <textarea id="description" name="description" type="text"></textarea>
+    </div>
+    <div class="control-group">
     <label>Data type</label>
-    <select name="type">
-      <option value="sequence">Sequence</option>
-    </select>
+    <input id="type_selection_upload" name="type" type="text" data-provide="typeahead"/>
     <span class="help-block">Type of the data</span>
+    <span class="help-block" id="type_selection_desc_upload"></span>
     <label>Data format</label>
-    <select name="format">
-      <option value="auto">Auto-detect</option>
-      <option value="fasta">Fasta</option>
-    </select>
+    <input id="format_selection_upload" name="format" type="text" data-provide="typeahead"/>
     <span class="help-block">Format of the data</span>
+    <span class="help-block" id="format_selection_desc_upload"></span>
     </div>
 
     <div class="control-group">
@@ -301,6 +314,34 @@ $(function() {
       },
       minLength: 3
    });
+
+
+   $('#type_selection_upload').typeahead({
+      source: t_edams,
+      updater: function (item) {
+        var elts = item.split('|');
+        $("#type_selection_desc_upload").html("<span class=\"label label-info\">"+item+"</span>");
+        return elts[0];
+      },
+      matcher: function(item) {
+        return item.indexOf(this.query) != -1;
+      },
+      minLength: 3
+   });
+
+   $('#format_selection_upload').typeahead({
+      source: f_edams,
+      updater: function (item) {
+        var elts = item.split('|');
+        $("#format_selection_desc_upload").html("<span class=\"label label-info\">"+item+"</span>");
+        return elts[0];
+      },
+      matcher: function(item) {
+        return item.indexOf(this.query) != -1;
+      },
+      minLength: 3
+   });
+
 
 
 
