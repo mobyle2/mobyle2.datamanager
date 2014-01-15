@@ -457,11 +457,83 @@ def my_view(request):
     Base view, i.e. home
     '''
     uid = None
+    dataset = None
     try:
         uid = request.params.getone('id')
     except Exception:
         uid = None
-    return {'user': get_user(request), 'uid': uid, 'protocols': get_protocols()}
+    if uid is not None:
+        dataset = connection.ProjectData.find_one({"_id": ObjectId(uid)})
+    return {'user': get_user(request), 'uid': uid, 'protocols': get_protocols(),
+            'dataset': dataset}
+
+@view_config(route_name='data_edit', renderer='mobyle.data.webmanager:templates/index.mako')
+def data_edit(request):
+    '''
+    Update common dataset fields, not files
+    '''
+    manager = ObjectManager()
+
+    options = {}
+    
+    dataset = None
+
+    user = get_auth_user(request)
+
+    try:
+        did = request.matchdict['uid']
+        dataset = connection.ProjectData.find_one({"_id": ObjectId(did)})
+        if dataset is None:
+            raise HTTPNotFound()
+        if not can_update_dataset(user, dataset):
+            raise HTTPFodbidden()
+    except Exception:
+        raise HTTPForbidden()
+
+    try:
+        privacy = request.params.getone('privacy')
+        if privacy == 'public':
+            dataset['public'] = True
+        else:
+            dataset['public'] = False
+    except Exception:
+        # Nothing to do
+        pass
+
+    try:
+        dataset['name'] = request.params.getone('name')
+    except Exception:
+        # Nothing to do
+        pass
+
+    try:
+        dataset['description'] = request.params.getone('description')
+    except Exception:
+        # Nothing to do
+        pass
+
+    try:
+        options['project'] = request.params.getone('project')
+        if user is None:
+            raise HTTPForbidden()
+        project = connection.Project.find_one({"_id": ObjectId(options['project'])})
+        if project is None or not can_update_project(user, project):
+            raise HttpForbidden()
+        else:
+            dataset['project'] = project['_id']
+    except Exception:
+        raise HTTPForbidden()
+
+    httpsession = request.session
+    if "_id" in httpsession:
+        options['user_id'] = httpsession['_id']
+
+    dataset.save()
+
+    request.session.flash('Dataset updated')
+
+    return {'user': get_user(request), 'protocols': get_protocols()}
+
 
 
 @view_config(route_name='upload_remote_data', renderer='mobyle.data.webmanager:templates/index.mako')
@@ -480,6 +552,16 @@ def upload_remote_data(request):
     if options['rurl'] is None:
         #files = {}
         return {'user': get_user(request)}
+
+    try:
+        privacy = request.params.getone('privacy')
+        if privacy == 'public':
+            options['public'] = True
+        else:
+            options['public'] = False
+    except Exception:
+        options['public'] = False
+
 
     try:
         options['type'] = request.params.getone('type')
@@ -665,6 +747,16 @@ def upload_data(request):
         options['description'] = request.params.getone('description')
     except Exception:
         options['description'] = None
+
+    try:                
+        privacy = request.params.getone('privacy')
+        if privacy == 'public':
+            options['public'] = True
+        else:
+            options['public'] = False
+    except Exception:
+        options['public'] = False
+
 
 
     files = handle_file_upload(request, options)

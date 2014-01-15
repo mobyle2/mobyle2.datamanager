@@ -12,32 +12,106 @@
     </blockquote>
 % else:
 <div class="row">
-<div class="span6">
-    <form id="remotefileupload" action="${request.route_url('upload_remote_data')}" method="POST">
-    <legend>Remote dataset</legend>
+% if uid:
+<div class="span4">
+    <form id="dataedit" action="${request.route_url('data_edit', uid=uid)}" method="POST">
+    <legend>Update dataset</legend>
+    <div class="control-group error">
+      <label>Updating</label>
+      <input type="text" value="${uid}" name="id"/>
+    </div>
     <div class="control-group">
     <label>Project</label>
     <select name="project">
     % for project in user['projects']:
-        <option value="${project['id']}">${project['name']}</option>
+	% if project['id'] == dataset['project']:
+		<option value="${project['id']}" selected>${project['name']}</option>
+	% else: 
+        	<option value="${project['id']}">${project['name']}</option>
+        % endif
     % endfor
     </select>
     </div>
     <div class="control-group">
     <label>Name (optional)</label>
-    <input id="name" name="name" type="text"/>
+    <input id="name" name="name" type="text"  value="${dataset['name']}"/>
     </div>
     <div class="control-group">
     <label>Description (optional)</label>
-    <textarea id="description" name="description" type="text"></textarea>
+    <textarea id="description" name="description" type="text">${dataset['description']}</textarea>
+    </div>
+    <div class="control-group">
+    <label>Privacy</label>
+    <select name="privacy">
+	%if dataset['public']:
+        <option value="private" selected>Private (project)</option>
+        <option value="public">Public</option>
+	%else:
+        <option value="private">Private (project)</option>
+        <option value="public" selected>Public</option>
+	%endif
+    </select>
     </div>
     <input type="hidden" class="apikey" name="apikey" value="${user['apikey']}"/>
+    <button class="btn btn-success">
+         <i class="icon-pencil icon-white"></i>
+         <span>Update properties</span>
+    </button>
+    </form>
+</div>
+% endif
+<div class="span4">
+    <form id="remotefileupload" action="${request.route_url('upload_remote_data')}" method="POST">
+    <legend>Load Remote dataset</legend>
     % if uid:
     <div class="control-group error">
       <label>Replacing file</label>
       <input type="text" value="${uid}" name="id"/>
     </div>
     % endif
+    <div class="control-group">
+    <label>Project</label>
+    <select name="project">
+    % for project in user['projects']:
+	% if uid and project['id'] == dataset['project']:
+		<option value="${project['id']}" selected>${project['name']}</option>
+	% else: 
+        	<option value="${project['id']}">${project['name']}</option>
+        % endif
+    % endfor
+    </select>
+    </div>
+    <div class="control-group">
+    <label>Name (optional)</label>
+    % if uid:
+    <input id="name" name="name" type="text"  value="${dataset['name']}"/>
+    % else:
+    <input id="name" name="name" type="text"/>
+    % endif
+    </div>
+    <div class="control-group">
+    <label>Description (optional)</label>
+    % if uid:
+    <textarea id="description" name="description" type="text">${dataset['description']}</textarea>
+    % else:
+    <textarea id="description" name="description" type="text"></textarea>
+    % endif
+    </div>
+    <div class="control-group">
+    <label>Privacy</label>
+    <select name="privacy">
+	%if uid and dataset['public']:
+        <option value="private" selected>Private (project)</option>
+        <option value="public">Public</option>
+	%else:
+        <option value="private">Private (project)</option>
+        <option value="public" selected>Public</option>
+	%endif
+    </select>
+    </div>
+
+    <input type="hidden" class="apikey" name="apikey" value="${user['apikey']}"/>
+
     <div class="control-group">
     <label>Data type</label>
     <input id="type_selection" name="type" type="text" data-provide="typeahead"/>
@@ -88,27 +162,58 @@
      
     </form>
 </div>
-<div class="span6">
+<div class="span4">
     <!-- The file upload form used as target for the file upload widget -->
     <form id="fileupload" action="${request.route_url('upload_data')}" method="POST" enctype="multipart/form-data">
 
     <legend>Upload dataset</legend>
+    % if uid:
+    <div class="control-group error">
+      <label>Replacing file</label>
+      <input type="text" name="id" value="${uid}"/>
+    </div>
+    % endif
     <div class="control-group">
     <label>Project</label>
     <select name="project">
     % for project in user['projects']:
-        <option value="${project['id']}">${project['name']}</option>
+	% if uid and project['id'] == dataset['project']:
+		<option value="${project['id']}" selected>${project['name']}</option>
+	% else: 
+        	<option value="${project['id']}">${project['name']}</option>
+        % endif
     % endfor
     </select>
     </div>
     <div class="control-group">
     <label>Name (optional)</label>
+    % if uid:
+    <input id="name" name="name" type="text"  value="${dataset['name']}"/>
+    % else:
     <input id="name" name="name" type="text"/>
+    % endif
     </div>
     <div class="control-group">
     <label>Description (optional)</label>
+    % if uid:
+    <textarea id="description" name="description" type="text">${dataset['description']}</textarea>
+    % else:
     <textarea id="description" name="description" type="text"></textarea>
+    % endif
     </div>
+    <div class="control-group">
+    <label>Privacy</label>
+    <select name="privacy">
+	%if uid and dataset['public']:
+        <option value="private" selected>Private (project)</option>
+        <option value="public">Public</option>
+	%else:
+        <option value="private">Private (project)</option>
+        <option value="public" selected>Public</option>
+	%endif
+    </select>
+    </div>
+
     <div class="control-group">
     <label>Data type</label>
     <input id="type_selection_upload" name="type" type="text" data-provide="typeahead"/>
@@ -133,12 +238,7 @@
     <span class="help-block">If data is uncompressed, group the dataset as a single data. If not grouped, all files will be declared as individual data element</span>
     </div>
     <input type="hidden" class="apikey" name="apikey" value="${user['apikey']}"/>
-    % if uid:
-    <div class="control-group error">
-      <label>Replacing file</label>
-      <input type="text" name="id" value="${uid}"/>
-    </div>
-    % endif
+
 
 
         <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
