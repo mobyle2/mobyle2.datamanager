@@ -138,72 +138,74 @@ $.getJSON("${request.route_url('my.json')}"+filter,function(data) {
     mylist.append("<tr><th>Status</th><th>Project</th><th>Name</th><th>Type/Format</th><th>Path</th><th>Size</th><th></th></tr>");
     var mylisthtml = "";
     for(var d=0;d<data.length;d++) {
-        var dataset = data[d];
-        mylisthtml += '<tr id="tr-'+dataset['_id']['$oid']+'">';
-        var actions = '';
-        var dstatus = '';
-        if(dataset['status'] == 0) {
-            dstatus = '<span class="label">Queued</span>'; 
-        }
-        else if(dataset['status'] == 1) {
-            dstatus = '<span class="label">Downloading</span>';
-        }
-        else if(dataset['status'] == 3) {
-            dstatus = '<span class="label">Uncompress</span>';
-            actions += '<button class="btn btn-warning delete" \
-                        data-uid="'+dataset['_id']['$oid']+'"> \
-                        <li class="icon-remove"> </li></button>';
-        }
-        else if(dataset['status'] == 1) {
-            dstatus = '<span class="label">Format checking</span>';
-        }
-        else if(dataset['status'] == 1) {
-            dstatus = '<span class="label label-important">Error</span>';
-            actions += '<button class="btn btn-info update" \
-                        data-uid="'+dataset['_id']['$oid']+'"> \
-                        <li class="icon-refresh"> </li></button>';
-            actions += '<button class="btn btn-warning delete" \
-                        data-uid="'+dataset['_id']['$oid']+'"> \
-                        <li class="icon-remove"> </li></button>';
-        }
-        else if(dataset['status'] == 2) {
-            actions = '<a class="btn btn-info datasetmodal" \
-                        data-uid="'+dataset['_id']['$oid']+'" \
-                        role="button" href="#datasetModal"> \
-                        <li class="icon-eye-open"> </li></a>';
-            if(dataset['data']['path']!=undefined) {
-                actions += "<button class=\"btn btn-info download\"" +
-                           " data-uid=\""+dataset['_id']['$oid']+"\"" +
-                           " data-path=\""+dataset['data']['path']+"\">" +
-                           "<li class=\"icon-download\"> </li></button>";
+        try{
+            var dataset = data[d];
+            mylisthtml += '<tr id="tr-'+dataset['_id']['$oid']+'">';
+            var actions = '';
+            var dstatus = '';
+            if(dataset['status'] == 0) {
+                dstatus = '<span class="label">Queued</span>';
             }
-            actions += '<button class="btn btn-info update" \
-                        data-uid="'+dataset['_id']['$oid']+'"> \
-                        <li class="icon-refresh"> </li></button>';
-            actions += '<button class="btn btn-warning delete" \
-                        data-uid="'+dataset['_id']['$oid']+'"> \
-                        <li class="icon-remove"> </li></button>';
-        }
+            else if(dataset['status'] == 1) {
+                dstatus = '<span class="label">Downloading</span>';
+            }
+            else if(dataset['status'] == 3) {
+                dstatus = '<span class="label">Uncompress</span>';
+                actions += '<button class="btn btn-warning delete" \
+                            data-uid="'+dataset['_id']['$oid']+'"> \
+                            <li class="icon-remove"> </li></button>';
+            }
+            else if(dataset['status'] == 1) {
+                dstatus = '<span class="label">Format checking</span>';
+            }
+            else if(dataset['status'] == 1) {
+                dstatus = '<span class="label label-important">Error</span>';
+                actions += '<button class="btn btn-info update" \
+                            data-uid="'+dataset['_id']['$oid']+'"> \
+                            <li class="icon-refresh"> </li></button>';
+                actions += '<button class="btn btn-warning delete" \
+                            data-uid="'+dataset['_id']['$oid']+'"> \
+                            <li class="icon-remove"> </li></button>';
+            }
+            else if(dataset['status'] == 2) {
+                actions = '<a class="btn btn-info datasetmodal" \
+                            data-uid="'+dataset['_id']['$oid']+'" \
+                            role="button" href="#datasetModal"> \
+                            <li class="icon-eye-open"> </li></a>';
+                if(dataset['data']['path']!=undefined) {
+                    actions += "<button class=\"btn btn-info download\"" +
+                               " data-uid=\""+dataset['_id']['$oid']+"\"" +
+                               " data-path=\""+dataset['data']['path']+"\">" +
+                               "<li class=\"icon-download\"> </li></button>";
+                }
+                actions += '<button class="btn btn-info update" \
+                            data-uid="'+dataset['_id']['$oid']+'"> \
+                            <li class="icon-refresh"> </li></button>';
+                actions += '<button class="btn btn-warning delete" \
+                            data-uid="'+dataset['_id']['$oid']+'"> \
+                            <li class="icon-remove"> </li></button>';
+            }
 
-        mylisthtml += '<td>'+dstatus+'</td><td>';
-        if(dataset['project'] != undefined) {
-            mylisthtml+= projects[dataset['project']['$oid']];
+            mylisthtml += '<td>'+dstatus+'</td><td>';
+            if(dataset['project'] != undefined) {
+                mylisthtml+= projects[dataset['project']['$oid']];
+            }
+            mylisthtml += '</td>';
+            mylisthtml += '<td>'+dataset['name']+'</td>';
+            if(dataset['data']['type']!=undefined) {
+                mylisthtml += '<td>'+dataset['data']['type']+ \
+                              '/'+ dataset['data']['format']+"</td>";
+            }
+            else { mylisthtml += '<td>N/A</td>'; }
+            if(dataset['data']['path']!=undefined) {
+                mylisthtml += '<td>'+dataset['data']['path']+'</td>';
+                mylisthtml += '<td>'+dataset['data']['size']+'</td>';
+            }
+            mylisthtml += '<td>'+actions+'</td>';
+            mylisthtml += '</tr>';
+        }catch(err){
+            console.log("error while displaying dataset", dataset);
         }
-        mylisthtml += '</td>';
-        mylisthtml += '<td>'+dataset['name']+'</td>';
-        if(dataset['data']['type']!=undefined) {
-            mylisthtml += '<td>'+dataset['data']['type']+ \
-                          '/'+ dataset['data']['format']+"</td>";
-        }
-        else { mylisthtml += '<td>N/A</td>'; }
-        if(dataset['data']['path']!=undefined) {
-            mylisthtml += '<td>'+dataset['data']['path']+'</td>';
-            mylisthtml += '<td>'+dataset['data']['size']+'</td>';
-        }
-        mylisthtml += '<td>'+actions+'</td>';
-        mylisthtml += '</tr>';
-
-
     }
     mylist.append(mylisthtml);
 
