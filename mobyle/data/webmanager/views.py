@@ -757,8 +757,6 @@ def upload_data(request):
     except Exception:
         options['public'] = False
 
-
-
     files = handle_file_upload(request, options)
     return {'files': files}
 
@@ -812,7 +810,10 @@ def write_blob(data, info, options):
         logging.debug('Should group data')
 
     dataset = ObjectManager.store(info['name'], file_path, options)
+    logging.info("OSALLOU")
+    logging.info(dataset)
     if dataset['status'] == ObjectManager.UNCOMPRESS:
+        logging.info("OSALLOU UNCOMPRESS")
         # delay decompression
         from mobyle.data.manager.background import uncompress
         newoptions = deepcopy(options)
@@ -821,10 +822,10 @@ def write_blob(data, info, options):
         use_delay = options['delay']
         if use_delay:
             newoptions['delay'] = True
-            uncompress.delay(dataset.get_file_path()+"/"+str(dataset['_id']), newoptions)
+            uncompress.delay(dataset.get_file_path()+"/"+str(dataset['data']['path'][0]), newoptions)
         else:
             newoptions['delay'] = False
-            uncompress(dataset.get_file_path()+"/"+str(dataset['_id']), newoptions)
+            uncompress(dataset.get_file_path()+"/"+str(dataset['data']['path'][0]), newoptions)
 
     os.remove(file_path)
     return file_path
@@ -841,11 +842,15 @@ def handle_file_upload(request, options):
         if type(fieldStorage) is unicode:
             continue
         result = {}
-        if 'name' in options and options['name'] is not None:
+        if 'name' in options and \
+            options['name'] is not None:
             result['name'] = options['name']
         else:
             result['name'] = re.sub(r'^.*\\', '',
                             fieldStorage.filename)
+        if options['uncompress']:
+            options['archive'] = re.sub(r'^.*\\', '',
+                                fieldStorage.filename)
         result['type'] = fieldStorage.type
         result['size'] = get_file_size(fieldStorage.file)
         if validate(result):

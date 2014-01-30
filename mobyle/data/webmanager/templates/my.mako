@@ -185,7 +185,11 @@ $.getJSON("${request.route_url('my.json')}"+filter,function(data) {
                             data-uid="'+dataset['_id']['$oid']+'"> \
                             <li class="icon-remove"> </li></button>';
             }
-
+            else if(dataset['status'] == 5) {
+                actions += '<button class="btn btn-warning delete" \
+                            data-uid="'+dataset['_id']['$oid']+'"> \
+                            <li class="icon-remove"> </li></button>';
+            }
             mylisthtml += '<td>'+dstatus+'</td><td>';
             if(dataset['project'] != undefined) {
                 mylisthtml+= projects[dataset['project']['$oid']];

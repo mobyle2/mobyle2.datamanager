@@ -21,39 +21,41 @@ function showDataSet(uid, url, mymodal, isowner) {
         if('format' in data['dataset']['data']) {
                 infoHtml += '<div><h3>Format: '+data['dataset']['data']['format']+'</h3></div>';
         }
-        if('value' in data['dataset']['data'] && $.isArray(data['dataset']['data']['value'])) {
-            // This is a ListData
+        if('path' in data['dataset']['data']) {
+            // This is a RefData (one or more file
+            var value = data['dataset']['data'];
             infoHtml += "<div><h3>Files</h3>";
+            infoHtml += "<div>Size: " + bytesToSize(value['size']) + "</div>";
             infoHtml += "<table class=\"table\">";
-            $.each(data['dataset']['data']['value'], function(key,value) {
+            for(i=0;i<value['path'].length;i++) {
+            //$.each(data['dataset']['data']['value']['path'], function(key,value) {
                 infoHtml += "<tr>";
-                if('path' in value) {
-                    var fpath = value['path'];
-                    infoHtml += "<td>" + value['path'] + "</td>";
-                    infoHtml += "<td>" + bytesToSize(value['size']) + "</td>";
-                    infoHtml += "<td><button class=\"btn btn-info download\""+
+                var fpath = value['path'][i];
+                infoHtml += "<td>" + value['path'][i] + "</td>";
+                infoHtml += "<td>";
+                infoHtml += "<button class=\"btn btn-info download\""+
                                 " data-uid=\""+uid+"\""+
                                 " data-path=\""+fpath+"\">"+
                                 "<li class=\"icon-download\">"+
-                                "</li></button></td>";
+                                "</li></button>";
+                if(isowner) {
+                    infoHtml += "<button class=\"btn btn-info btn-share\""+
+                                "data-uid=\""+uid+"\""+
+                                " data-path=\""+fpath+"\">"+
+                                "<li class=\"icon-share\"></li>Share</button>";
                 }
-                else {
-                    infoHtml += "<td>" + value['value'] + "</td>";
-                }
+                infoHtml += "</td>";
+
                 infoHtml += "</tr>";
-            });
-            infoHtml += "</table>";
-            if(isowner) {
-            infoHtml += "<button class=\"btn btn-info btn-share\" data-uid=\""+uid+"\" data-path=\"\"><li class=\"icon-share\"></li>Share</button>";
+            //});
             }
+            infoHtml += "</table>";
 
             infoHtml += "</div>";
         }
         else {
-            var fpath = data['dataset']['data']['path']; 
-            if(isowner) {
-            infoHtml += "<button class=\"btn btn-info btn-share\" data-uid=\""+uid+"\" data-path=\""+fpath+"\"><li class=\"icon-share\"></li>Share</button>";
-            }
+            // This is a struct data or other... TODO
+            console.log("StructData not yet implemented");
         }
                 infoHtml += '<div id="token-share"></div>';
                 infoHtml += '<h3>History</h3>'
