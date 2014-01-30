@@ -66,7 +66,7 @@ $(function(){
 $(document).on("click",".filter", function(e) {
   var key = $(this).attr("data-key");
   var value = $(this).attr("data-uid");
-  get_public_datasets(key,value);
+  get_my_datasets(key,value);
   $("#filter").html("<ul class=\"breadcrumb\"><li>"+key+" = "+value+"</li></ul>");
 
 });
@@ -121,12 +121,12 @@ $(document).on("click",'.update',function(e) {
         $(location).attr('href',"${route_url('main',request)}?id="+uid) ;
 });
 
-get_public_datasets(null,null);
+get_my_datasets(null,null);
 
 });
 
 
-function get_public_datasets(key,value) {
+function get_my_datasets(key,value) {
 var filter = "";
 if(key!=null && value!=null) {
   filter = "?filter="+key+"&"+key+"="+value;
