@@ -71,7 +71,7 @@ class DataManagerTest(unittest.TestCase):
             self.assertTrue(data is not None)
             self.assertTrue(data['status'] == ObjectManager.DOWNLOADED)
             self.assertTrue(os.path.exists(os.path.join(newdata.get_file_path(),
-                                                        data['data']['path'])))
+                                                        data['data']['path'][0])))
 
         def test_update(self):
             options = {'uncompress': False, 'group': False, 'type':
@@ -91,10 +91,10 @@ class DataManagerTest(unittest.TestCase):
             data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
             self.assertTrue(data['status'] == ObjectManager.DOWNLOADED)
             self.assertTrue(os.path.exists(os.path.join(newdata.get_file_path(),
-                                                        data['data']['path'])))
+                                                        data['data']['path'][0])))
             self.manager.delete(fid, options)
             self.assertFalse(os.path.exists(os.path.join(newdata.get_file_path(),
-                                                        data['data']['path'])))
+                                                        data['data']['path'][0])))
             try:
                 data = connection.ProjectData.find_one({'_id': ObjectId(fid)})
                 self.fail("Data should have been deleted")
@@ -128,7 +128,7 @@ class DataManagerTest(unittest.TestCase):
             download(options['rurl'], options)
             data = connection.ProjectData.find_one({'_id': ObjectId(options['id'])})
             self.assertTrue(os.path.exists(os.path.join(newdata.get_file_path(),
-                                            data['data']['path'])))
+                                            data['data']['path'][0])))
 
 
         def test_symlink_local(self):
@@ -158,4 +158,4 @@ class DataManagerTest(unittest.TestCase):
             download(options['rurl'], options)
             data = connection.ProjectData.find_one({'_id': ObjectId(options['id'])})
             self.assertTrue(os.path.exists(os.path.join(newdata.get_file_path(),
-                                                        data['data']['path'])))
+                                                        data['data']['path'][0])))
