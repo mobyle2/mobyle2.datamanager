@@ -130,13 +130,13 @@ class MobyleFileSystem(AbstractedFS):
             else:
                 dataset = elts[2].split('_')
                 dataset = connection.ProjectData.fetch_one({"_id": ObjectId(dataset[0])})
-                if 'value' in dataset['data']:
-                    for subdata in dataset['data']['value']:
+                if 'path' in dataset['data']:
+                    for path in dataset['data']['path']:
                         files.append({'type' : 'files', 'elt': { '_id':
-                        str(dataset['_id']), 'name' : subdata['path']}})
-                else:
-                    files.append({'type' : 'files', 'elt': { '_id' :
-                    str(dataset['_id']), 'name' : dataset['data']['path']}})
+                                    str(dataset['_id']), 'name' : path }})
+                #else:
+                #    files.append({'type' : 'files', 'elt': { '_id' :
+                #    str(dataset['_id']), 'name' : dataset['data']['path']}})
 
         logging.debug("list files " + str(files))
         return files
