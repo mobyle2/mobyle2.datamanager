@@ -375,60 +375,89 @@
 
 <script>
 $(function() {
-   var edam_types = { 'EDAM:123' : 'sequence', 'EDAM:456': 'something' };
-   var edam_formats = { 'EDAM:323' : 'fasta', 'EDAM:356': 'text' };
 
-   var t_edams = []
-   for(edam in edam_types) {
-       t_edams.push(edam+"|"+edam_types[edam]);
-   }
-   var f_edams = ["auto"]
-   for(edam in edam_formats) {
-       f_edams.push(edam+"|"+edam_formats[edam]);
-   }
+   //var edam_types = { 'EDAM:123' : 'sequence', 'EDAM:456': 'something' };
+   //var edam_formats = { 'EDAM:323' : 'fasta', 'EDAM:356': 'text' };
 
+   var service_type_terms = [];
 
+   var t_edams = [];
+   //for(edam in edam_types) {
+   //    t_edams.push(edam+"|"+edam_types[edam]);
+   //}
+   //var f_edams = ["auto"]
+   var f_edams = {};
+   //for(edam in edam_formats) {
+   //    f_edams.push(edam+"|"+edam_formats[edam]);
+   //}
 
-   $('#type_selection').typeahead({
-      source: t_edams,
+   $.getJSON("servicetypeterms", function(data) {
+     var nbelt = data.length;
+     service_type_terms = data;
+     for(i=0;i<nbelt;i++) {
+        t_edams.push(data[i]["data_term_id"]+"|"+data[i]["data_term_name"]);
+     }
+     updateTypes();
+   });
+
+   $("#format_selection_upload").typeahead({
+      source: f_edams["format_selection_upload"],
       updater: function (item) {
         var elts = item.split('|');
-        $("#type_selection_desc").html("<span class=\"label label-info\">"+item+"</span>");
+        $("#format_selection_desc_upload").html("<span class=\"label label-info\">"+item+"</span>");
         return elts[0];
       },
       matcher: function(item) {
-        return item.indexOf(this.query) != -1;
+        return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
       },
       minLength: 3
    });
 
-   $('#format_selection').typeahead({
-      source: f_edams,
+   $("#format_selection").typeahead({
+      source: f_edams["format_selection"],
       updater: function (item) {
         var elts = item.split('|');
         $("#format_selection_desc").html("<span class=\"label label-info\">"+item+"</span>");
         return elts[0];
       },
       matcher: function(item) {
-        return item.indexOf(this.query) != -1;
+        return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
       },
       minLength: 3
    });
 
 
-   $('#type_selection_upload').typeahead({
-      source: t_edams,
+   /**
+   * Update list of available formats according to selected term type
+   */
+   function updateFormats(elt, value) {
+     f_edams[elt] = [];
+     var nbelt = service_type_terms.length;
+     for(i=0;i<nbelt;i++) {
+        if(service_type_terms[i]["data_term_id"]==value) {
+            var nbfmt = service_type_terms[i]["format_term_ids"].length;
+            for(j=0;j<nbfmt;j++) {
+                f_edams[elt].push(service_type_terms[i]["format_term_ids"][j]);
+            }
+        break;
+        }
+     }
+   $('#'+elt).data('typeahead').source =  f_edams[elt];
+   /*
+   $('#'+elt).typeahead({
+      source: f_edams[elt],
       updater: function (item) {
         var elts = item.split('|');
-        $("#type_selection_desc_upload").html("<span class=\"label label-info\">"+item+"</span>");
+        $("#"+elt+"_desc").html("<span class=\"label label-info\">"+item+"</span>");
         return elts[0];
       },
       matcher: function(item) {
-        return item.indexOf(this.query) != -1;
+        return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
       },
       minLength: 3
    });
-
+   */
+   /*
    $('#format_selection_upload').typeahead({
       source: f_edams,
       updater: function (item) {
@@ -441,9 +470,45 @@ $(function() {
       },
       minLength: 3
    });
+   */
 
 
+   }
 
+   /**
+   * Update list of available term types according to downloaded list
+   */
+   function updateTypes() {
+
+   $('#type_selection').typeahead({
+      source: t_edams,
+      updater: function (item) {
+        var elts = item.split('|');
+        $("#type_selection_desc").html("<span class=\"label label-info\">"+item+"</span>");
+        updateFormats("format_selection",elts[0]);
+        return elts[0];
+      },
+      matcher: function(item) {
+        return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
+      },
+      minLength: 3
+   });
+
+   $('#type_selection_upload').typeahead({
+      source: t_edams,
+      updater: function (item) {
+        var elts = item.split('|');
+        updateFormats("format_selection_upload",elts[0]);
+        $("#type_selection_desc_upload").html("<span class=\"label label-info\">"+item+"</span>");
+        return elts[0];
+      },
+      matcher: function(item) {
+        return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
+      },
+      minLength: 3
+   });
+
+   }
 
 });
 

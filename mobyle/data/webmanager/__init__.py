@@ -27,6 +27,13 @@ def data_include(config):
     config.add_route('data_plugin_upload', '/plugin/{plugin}/upload')
     config.add_route('data_plugin_download', '/plugin/{plugin}/download')
 
+    from mobyle.common import connection
+    from mf.dashboard import Dashboard
+    Dashboard.set_connection(connection.connection)
+    from mobyle.common.service_terms import ServiceTypeTerm
+    from mobyle.common.mobyleConfig import MobyleConfig
+    Dashboard.add_dashboard([ServiceTypeTerm], config)
+
 
 def objectmanager_include(config):
     from  mobyle.common.objectmanager import ObjectManager
