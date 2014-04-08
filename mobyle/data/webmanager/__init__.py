@@ -31,8 +31,24 @@ def data_include(config):
     from mf.dashboard import Dashboard
     Dashboard.set_connection(connection.connection)
     from mobyle.common.service_terms import ServiceTypeTerm
+    from mobyle.common.service import Service
     from mobyle.common.mobyleConfig import MobyleConfig
-    Dashboard.add_dashboard([ServiceTypeTerm], config)
+    Dashboard.add_dashboard([ServiceTypeTerm, Service], config)
+
+    from bson import json_util
+    from bson.objectid import ObjectId
+    import datetime
+    from pyramid.renderers import JSON
+    # automatically serialize bson ObjectId to Mongo extended JSON
+    json_renderer = JSON()
+
+    def objectId_adapter(obj, request):
+        return json_util.default(obj)
+    def datetime_adapter(obj, request):
+        return json_util.default(obj)
+    json_renderer.add_adapter(ObjectId, objectId_adapter)
+    json_renderer.add_adapter(datetime.datetime, datetime_adapter)
+    config.add_renderer('json', json_renderer)
 
 
 def objectmanager_include(config):
