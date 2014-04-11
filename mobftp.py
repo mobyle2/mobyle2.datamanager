@@ -1,7 +1,8 @@
 # http://code.google.com/p/pyftpdlib/wiki/Tutorial#4.0_-_Customizing_your_FTP_server
 
-from pyftpdlib.handlers import FTPHandler
+#from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
+from mobyle.data.ftp.mobyleftphandler import MobyleFTPHandler
 
 import sys
 import argparse
@@ -43,7 +44,7 @@ def main():
     # anonymous user
 
     # Instantiate FTP handler class
-    handler = FTPHandler
+    handler = MobyleFTPHandler
     handler.authorizer = authorizer
     handler.abstracted_fs = MobyleFileSystem
 

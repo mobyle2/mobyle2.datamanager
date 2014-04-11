@@ -810,10 +810,8 @@ def write_blob(data, info, options):
         logging.debug('Should group data')
 
     dataset = ObjectManager.store(info['name'], file_path, options)
-    logging.info("OSALLOU")
     logging.info(dataset)
     if dataset['status'] == ObjectManager.UNCOMPRESS:
-        logging.info("OSALLOU UNCOMPRESS")
         # delay decompression
         from mobyle.data.manager.background import uncompress
         newoptions = deepcopy(options)
