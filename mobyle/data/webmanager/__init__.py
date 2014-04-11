@@ -43,6 +43,8 @@ def main(global_config, **settings):
 
     from mobyle.common.config import Config
     mobyle_config = Config().config()
+    for setting in global_config:
+        mobyle_config.set('app:main', setting, global_config[setting])
     for setting in settings:
         mobyle_config.set('app:main', setting, settings[setting])
     #end initialization
