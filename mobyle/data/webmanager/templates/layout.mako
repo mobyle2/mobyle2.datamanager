@@ -15,6 +15,7 @@ from pyramid.url import route_url,static_url
   <link rel="stylesheet" href="${static_url('mobyle.data.webmanager:static/mobyle.css', request)}">
   <link rel="stylesheet" href="${static_url('mobyle.data.webmanager:static/bootstrap/css/bootstrap.min.css',request)}" media="screen">
   <link rel="stylesheet" href="${static_url('mobyle.data.webmanager:static/bootstrap/css/bootstrap-responsive.min.css',request)}">
+  <link rel="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap-editable/js/bootstrap-editable.css" rel="stylesheet"/>
   <script src="${static_url('mobyle.data.webmanager:static/jquery-1.9.0.min.js',request)}"></script>
   <script src="${static_url('mobyle.data.webmanager:static/fileupload/js/vendor/jquery.ui.widget.js',request)}"></script>
   <script src="${static_url('mobyle.data.webmanager:static/fileupload/js/jquery.iframe-transport.js',request)}"></script>
@@ -75,7 +76,7 @@ src="${static_url('mobyle.data.webmanager:static/javascript-templates/tmpl.min.j
   </div>
   <script src="${static_url('mobyle.data.webmanager:static/bootstrap/js/bootstrap.min.js',request)}"></script>
   <script src="${static_url('mobyle.data.webmanager:static//mobyle-datamanager.js',request)}"></script>
-
+  <script src="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap-editable/js/bootstrap-editable.min.js"></script>
   <script>
   $(document).ready(function() {
       $("#logout").click(function() {

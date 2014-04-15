@@ -16,6 +16,7 @@ def data_include(config):
     config.add_route('my.json', '/my.json')
     config.add_route('public', '/public')
     config.add_route('public.json', '/public.json')
+    config.add_route('projects', '/projects')
     config.add_route('data', '/data/{uid}')
     config.add_route('data_edit', '/data/{uid}/edit')
     config.add_route('data_token','/data/{uid}/token')
@@ -66,6 +67,8 @@ def main(global_config, **settings):
 
     from mobyle.common.config import Config
     mobyle_config = Config().config()
+    for setting in global_config:
+            mobyle_config.set('app:main', setting, global_config[setting])
     for setting in settings:
         mobyle_config.set('app:main', setting, settings[setting])
     #end initialization

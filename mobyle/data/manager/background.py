@@ -104,7 +104,7 @@ def download(furl, options=None):
                     dataset = mngr.update(ObjectManager.DOWNLOADED, options)
                     # We manage here one file at a time, so only one dataset
                     if len(dataset) > 1:
-                        raise MobyleError("download manage only one file") 
+                        raise MobyleError("download manage only one file")
                     if dataset[0]['status'] == ObjectManager.UNCOMPRESS:
                         # delay decompression
                         if options['delay']:
@@ -169,7 +169,7 @@ def uncompress(f, options=None):
         mngr.update(ObjectManager.UNCOMPRESSED, options)
         if 'delete' in options and options['delete']:
                 os.remove(f)
-    except Exception:
+    except Exception as e:
         mngr.update(ObjectManager.ERROR, options)
 
 
