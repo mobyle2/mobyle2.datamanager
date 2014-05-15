@@ -39,6 +39,7 @@ def main(global_config, **settings):
     """
     config = Configurator(settings=settings)
     config.include(pyramid_beaker)
+    config.include('pyramid_mako')
     config.include('pyramid_mailer')
 
     from mobyle.common.config import Config
