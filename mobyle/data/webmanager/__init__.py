@@ -63,12 +63,13 @@ def main(global_config, **settings):
     """
     config = Configurator(settings=settings)
     config.include(pyramid_beaker)
+    config.include('pyramid_mako')
     config.include('pyramid_mailer')
 
     from mobyle.common.config import Config
     mobyle_config = Config().config()
     for setting in global_config:
-            mobyle_config.set('app:main', setting, global_config[setting])
+        mobyle_config.set('app:main', setting, global_config[setting])
     for setting in settings:
         mobyle_config.set('app:main', setting, settings[setting])
     #end initialization

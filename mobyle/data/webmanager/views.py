@@ -27,8 +27,8 @@ from bson import ObjectId
 
 
 from mobyle.data.manager.background import download, upload
-
-from  mobyle.data.manager.pluginmanager import DataPluginManager
+from mobyle.data.manager.pluginmanager import DataPluginManager
+from mobyle.common.config import Config
 
 from mf.views import MF_EDIT, MF_READ
 
@@ -52,6 +52,9 @@ def get_protocols():
     return Protocols._BASE_PROTOCOLS
 
 
+def use_delay():
+    mobyle_config = Config.config()
+    return asbool(mobyle_config.get("app:main","delay_background"))
 
 @view_config(route_name='data_plugin_upload')
 def data_plugin_upload(request):
@@ -95,8 +98,8 @@ def data_plugin_upload(request):
                 values, request=request)
 
     options = drop.set_options(request.session, options)
-    use_delay = asbool(request.registry.settings['delay_background'])
-    if use_delay:
+    #use_delay = asbool(request.registry.settings['delay_background'])
+    if use_delay():
         options['delay'] = True
         upload.delay(dfile, options)
     else:
@@ -539,7 +542,7 @@ def data_edit(request):
                 # StructData
                 fpath = request.params.getone('value')
                 ont_term = request.params.getone('pk')
-                dataset['data']['properties'][ont_term]['type'] = ont_term
+                #dataset['data']['properties'][ont_term]['type'] = ont_term
                 dataset['data']['properties'][ont_term]['path'] = [fpath]
                 for elt in dataset['data']['files']:
                     if elt['path'] == fpath:
@@ -630,8 +633,15 @@ def upload_remote_data(request):
 
     try:
         options['type'] = request.params.getone('type')
+        tmp_elts = options['type'].split('|')
+        if len(tmp_elts) > 2:
+            options['type_name'] = tmp_elts[1]
+        else:
+            options['type_name'] = None
+        options['type'] = tmp_elts[0]
     except Exception:
         options['type'] = None
+
 
     try:
         options['name'] = request.params.getone('name')
@@ -645,6 +655,8 @@ def upload_remote_data(request):
 
     try:
         options['format'] = request.params.getone('format')
+        tmp_elts = options['format'].split('|')
+        options['format'] = tmp_elts[0]
     except Exception:
         options['format'] = 'auto'
 
@@ -718,8 +730,8 @@ def upload_remote_data(request):
     httpsession = request.session
     if "_id" in httpsession:
         options['user_id'] = httpsession['_id']
-    use_delay = asbool(request.registry.settings['delay_background'])
-    if use_delay:
+    #use_delay = asbool(request.registry.settings['delay_background'])
+    if use_delay():
         options['delay'] = True
         download.delay(options['rurl'], options)
     else:
@@ -795,11 +807,19 @@ def upload_data(request):
 
     try:
         options['format'] = request.params.getone('format')
+        tmp_elts = options['format'].split('|')
+        options['format'] = tmp_elts[0]
     except Exception:
         options['format'] = 'auto'
 
     try:
         options['type'] = request.params.getone('type')
+        tmp_elts = options['type'].split('|')
+        if len(tmp_elts) > 2:
+            options['type_name'] = tmp_elts[1]
+        else:
+            options['type_name'] = None
+        options['type'] = tmp_elts[0]
     except Exception:
         options['type'] = None
 
@@ -900,7 +920,8 @@ def handle_file_upload(request, options):
     '''
     results = []
     blob_keys = []
-    options['delay'] = asbool(request.registry.settings['delay_background'])
+    #options['delay'] = asbool(request.registry.settings['delay_background'])
+    options['delay'] = use_delay()
     for name, fieldStorage in request.POST.items():
         if type(fieldStorage) is unicode:
             continue

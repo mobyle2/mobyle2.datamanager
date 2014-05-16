@@ -349,11 +349,25 @@ $(function() {
      for(i=0;i<nbelt;i++) {
         if('properties' in data[i]) {
             var term_id = '';
+            var term_name = '';
+            var term_format = '';
+            var term_format_name = '';
+            var term_key = '';
             for(key in data[i]['properties']) {
-                if(term_id!='') { term_id+= "+"; }
+                if(term_id!='') {
+                    term_key += "+";
+                    term_id += "+";
+                    term_name += "+";
+                    term_format += "+";
+                    term_format_name += "+";
+                }
+                term_key += key;
                 term_id += data[i]['properties'][key]['term_id'];
+                term_name += data[i]['properties'][key]['name'];
+                term_format += data[i]['properties'][key]['format_terms'][0]['term_id'];
+                term_format_name += data[i]['properties'][key]['format_terms'][0]['name'];
             }
-            t_edams.push(term_id+"|"+data[i]["name"]);
+            t_edams.push(term_id+"|"+term_key+"|"+term_name);
         }
         else {
             t_edams.push(data[i]["term_id"]+"|"+data[i]["name"]);
@@ -365,9 +379,10 @@ $(function() {
    $("#format_selection_upload").typeahead({
       source: f_edams["format_selection_upload"],
       updater: function (item) {
-        var elts = item.split('|');
+        //var elts = item.split('|');
         $("#format_selection_desc_upload").html("<span class=\"label label-info\">"+item+"</span>");
-        return elts[0];
+        //return elts[0];
+        return item;
       },
       matcher: function(item) {
         return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
@@ -378,9 +393,10 @@ $(function() {
    $("#format_selection").typeahead({
       source: f_edams["format_selection"],
       updater: function (item) {
-        var elts = item.split('|');
+        //var elts = item.split('|');
         $("#format_selection_desc").html("<span class=\"label label-info\">"+item+"</span>");
-        return elts[0];
+        //return elts[0];
+        return item;
       },
       matcher: function(item) {
         return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
@@ -396,7 +412,21 @@ $(function() {
      f_edams[elt] = [];
      var nbelt = service_type_terms.length;
      for(i=0;i<nbelt;i++) {
-        if(service_type_terms[i]["name"]==value) {
+        var match = false;
+        if("properties" in service_type_terms[i]) {
+            var types = value.split('+');
+            match = true;
+            for(key in service_type_terms[i]['properties']) {
+                if(! key in types) {
+                    match = false;
+                    break;
+                }
+            }
+        }
+        else if(service_type_terms[i]["name"]==value) {
+            match = true;
+        }
+        if(match) {
             if("properties" in service_type_terms[i]) {
                 var keys = value.split('+');
                 var complexedam = '';
@@ -461,7 +491,8 @@ $(function() {
         var elts = item.split('|');
         $("#type_selection_desc").html("<span class=\"label label-info\">"+item+"</span>");
         updateFormats("format_selection",elts[1]);
-        return elts[0];
+        //return elts[0];
+        return item;
       },
       matcher: function(item) {
         return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
@@ -475,7 +506,8 @@ $(function() {
         var elts = item.split('|');
         updateFormats("format_selection_upload",elts[1]);
         $("#type_selection_desc_upload").html("<span class=\"label label-info\">"+item+"</span>");
-        return elts[0];
+        //return elts[0];
+        return item;
       },
       matcher: function(item) {
         return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
