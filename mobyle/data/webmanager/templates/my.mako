@@ -151,7 +151,7 @@ $.getJSON("${request.route_url('my.json')}"+filter,function(data) {
             }
             else if(dataset['status'] == 3) {
                 dstatus = '<span class="label">Uncompress</span>';
-                actions += '<button class="btn btn-warning delete" \
+                actions += '<button title="Delete" class="btn btn-warning delete" \
                             data-uid="'+dataset['_id']['$oid']+'"> \
                             <li class="icon-remove"> </li></button>';
             }
@@ -160,33 +160,36 @@ $.getJSON("${request.route_url('my.json')}"+filter,function(data) {
             }
             else if(dataset['status'] == 1) {
                 dstatus = '<span class="label label-important">Error</span>';
-                actions += '<button class="btn btn-info update" \
+                actions += '<button title="Update files" class="btn btn-info update" \
                             data-uid="'+dataset['_id']['$oid']+'"> \
                             <li class="icon-refresh"> </li></button>';
-                actions += '<button class="btn btn-warning delete" \
+                actions += '<button title="Delete" class="btn btn-warning delete" \
                             data-uid="'+dataset['_id']['$oid']+'"> \
                             <li class="icon-remove"> </li></button>';
             }
-            else if(dataset['status'] == 2) {
-                actions = '<a class="btn btn-info datasetmodal" \
+            else if(dataset['status'] == 2 || dataset['status'] == 8) {
+		if(dataset['status'] == 8) {
+			dstatus = '<span class="label label-warning">Needs data info</span>';
+		}
+                actions = '<a title="Show/edit properties" class="btn btn-info datasetmodal" \
                             data-uid="'+dataset['_id']['$oid']+'" \
                             role="button" href="#datasetModal"> \
                             <li class="icon-eye-open"> </li></a>';
                 if(dataset['data']['path']!=undefined) {
-                    actions += "<button class=\"btn btn-info download\"" +
+                    actions += "<button title=\"Download\" class=\"btn btn-info download\"" +
                                " data-uid=\""+dataset['_id']['$oid']+"\"" +
                                " data-path=\""+dataset['data']['path']+"\">" +
                                "<li class=\"icon-download\"> </li></button>";
                 }
-                actions += '<button class="btn btn-info update" \
+                actions += '<button title="Update files" class="btn btn-info update" \
                             data-uid="'+dataset['_id']['$oid']+'"> \
                             <li class="icon-refresh"> </li></button>';
-                actions += '<button class="btn btn-warning delete" \
+                actions += '<button title="Delete" class="btn btn-warning delete" \
                             data-uid="'+dataset['_id']['$oid']+'"> \
                             <li class="icon-remove"> </li></button>';
             }
             else if(dataset['status'] == 5) {
-                actions += '<button class="btn btn-warning delete" \
+                actions += '<button title="Delete" class="btn btn-warning delete" \
                             data-uid="'+dataset['_id']['$oid']+'"> \
                             <li class="icon-remove"> </li></button>';
             }
@@ -204,6 +207,9 @@ $.getJSON("${request.route_url('my.json')}"+filter,function(data) {
             if(dataset['data']['path']!=undefined) {
                 mylisthtml += '<td>'+dataset['data']['path']+'</td>';
                 mylisthtml += '<td>'+dataset['data']['size']+'</td>';
+            }
+	    else {
+		mylisthtml += '<td></td><td></td>';
             }
             mylisthtml += '<td>'+actions+'</td>';
             mylisthtml += '</tr>';

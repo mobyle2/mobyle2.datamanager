@@ -12,55 +12,7 @@
     </blockquote>
 % else:
 <div class="row">
-% if uid:
-<div class="span4">
-    <form id="dataedit" action="${request.route_url('data_edit', uid=uid)}" method="POST">
-    <legend>Update dataset</legend>
-    <div class="control-group error">
-      <label>Updating</label>
-      <input type="text" value="${uid}" name="id"/>
-    </div>
-    <div class="control-group">
-    <label>Project</label>
-    <select name="project">
-    % for project in user['projects']:
-	% if project['id'] == dataset['project']:
-		<option value="${project['id']}" selected>${project['name']}</option>
-	% else: 
-        	<option value="${project['id']}">${project['name']}</option>
-        % endif
-    % endfor
-    </select>
-    </div>
-    <div class="control-group">
-    <label>Name (optional)</label>
-    <input id="name" name="name" type="text"  value="${dataset['name']}"/>
-    </div>
-    <div class="control-group">
-    <label>Description (optional)</label>
-    <textarea id="description" name="description" type="text">${dataset['description']}</textarea>
-    </div>
-    <div class="control-group">
-    <label>Privacy</label>
-    <select name="privacy">
-	%if dataset['public']:
-        <option value="private" selected>Private (project)</option>
-        <option value="public">Public</option>
-	%else:
-        <option value="private">Private (project)</option>
-        <option value="public" selected>Public</option>
-	%endif
-    </select>
-    </div>
-    <input type="hidden" class="apikey" name="apikey" value="${user['apikey']}"/>
-    <button class="btn btn-success">
-         <i class="icon-pencil icon-white"></i>
-         <span>Update properties</span>
-    </button>
-    </form>
-</div>
-% endif
-<div class="span4">
+<div class="span6">
     <form id="remotefileupload" action="${request.route_url('upload_remote_data')}" method="POST">
     <legend>Load Remote dataset</legend>
     % if uid:
@@ -162,7 +114,7 @@
      
     </form>
 </div>
-<div class="span4">
+<div class="span6">
     <!-- The file upload form used as target for the file upload widget -->
     <form id="fileupload" action="${request.route_url('upload_data')}" method="POST" enctype="multipart/form-data">
 
@@ -375,60 +327,143 @@
 
 <script>
 $(function() {
-   var edam_types = { 'EDAM:123' : 'sequence', 'EDAM:456': 'something' };
-   var edam_formats = { 'EDAM:323' : 'fasta', 'EDAM:356': 'text' };
 
-   var t_edams = []
-   for(edam in edam_types) {
-       t_edams.push(edam+"|"+edam_types[edam]);
-   }
-   var f_edams = ["auto"]
-   for(edam in edam_formats) {
-       f_edams.push(edam+"|"+edam_formats[edam]);
-   }
+   //var edam_types = { 'EDAM:123' : 'sequence', 'EDAM:456': 'something' };
+   //var edam_formats = { 'EDAM:323' : 'fasta', 'EDAM:356': 'text' };
 
+   var service_type_terms = [];
 
+   var t_edams = [];
+   //for(edam in edam_types) {
+   //    t_edams.push(edam+"|"+edam_types[edam]);
+   //}
+   //var f_edams = ["auto"]
+   var f_edams = {};
+   //for(edam in edam_formats) {
+   //    f_edams.push(edam+"|"+edam_formats[edam]);
+   //}
 
-   $('#type_selection').typeahead({
-      source: t_edams,
+   $.getJSON("servicetypeterms", function(data) {
+     var nbelt = data.length;
+     service_type_terms = data;
+     for(i=0;i<nbelt;i++) {
+        if('properties' in data[i]) {
+            var term_id = '';
+            var term_name = '';
+            var term_format = '';
+            var term_format_name = '';
+            var term_key = '';
+            for(key in data[i]['properties']) {
+                if(term_id!='') {
+                    term_key += "+";
+                    term_id += "+";
+                    term_name += "+";
+                    term_format += "+";
+                    term_format_name += "+";
+                }
+                term_key += key;
+                term_id += data[i]['properties'][key]['term_id'];
+                term_name += data[i]['properties'][key]['name'];
+                term_format += data[i]['properties'][key]['format_terms'][0]['term_id'];
+                term_format_name += data[i]['properties'][key]['format_terms'][0]['name'];
+            }
+            t_edams.push(term_id+"|"+term_key+"|"+term_name);
+        }
+        else {
+            t_edams.push(data[i]["term_id"]+"|"+data[i]["name"]);
+        }
+     }
+     updateTypes();
+   });
+
+   $("#format_selection_upload").typeahead({
+      source: f_edams["format_selection_upload"],
       updater: function (item) {
-        var elts = item.split('|');
-        $("#type_selection_desc").html("<span class=\"label label-info\">"+item+"</span>");
-        return elts[0];
+        //var elts = item.split('|');
+        $("#format_selection_desc_upload").html("<span class=\"label label-info\">"+item+"</span>");
+        //return elts[0];
+        return item;
       },
       matcher: function(item) {
-        return item.indexOf(this.query) != -1;
+        return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
       },
       minLength: 3
    });
 
-   $('#format_selection').typeahead({
-      source: f_edams,
+   $("#format_selection").typeahead({
+      source: f_edams["format_selection"],
       updater: function (item) {
-        var elts = item.split('|');
+        //var elts = item.split('|');
         $("#format_selection_desc").html("<span class=\"label label-info\">"+item+"</span>");
-        return elts[0];
+        //return elts[0];
+        return item;
       },
       matcher: function(item) {
-        return item.indexOf(this.query) != -1;
+        return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
       },
       minLength: 3
    });
 
 
-   $('#type_selection_upload').typeahead({
-      source: t_edams,
+   /**
+   * Update list of available formats according to selected term type
+   */
+   function updateFormats(elt, value) {
+     f_edams[elt] = [];
+     var nbelt = service_type_terms.length;
+     for(i=0;i<nbelt;i++) {
+        var match = false;
+        if("properties" in service_type_terms[i]) {
+            var types = value.split('+');
+            match = true;
+            for(key in service_type_terms[i]['properties']) {
+                if(! key in types) {
+                    match = false;
+                    break;
+                }
+            }
+        }
+        else if(service_type_terms[i]["name"]==value) {
+            match = true;
+        }
+        if(match) {
+            if("properties" in service_type_terms[i]) {
+                var keys = value.split('+');
+                var complexedam = '';
+                var complexname = ''
+                for(j=0;j<keys.length;j++) {
+                    if(complexedam!='') { complexedam += '+'; complexname += '+'; }
+                    var subelt = service_type_terms[i]['properties'][keys[j]]
+                    complexedam += subelt["format_terms"][0]["term_id"]
+                    complexname += subelt["format_terms"][0]["name"];
+                }
+                f_edams[elt].push(complexedam+"|"+complexname);
+            }
+            else {
+                var nbfmt = service_type_terms[i]["format_terms"].length;
+                for(j=0;j<nbfmt;j++) {
+                    f_edams[elt].push(service_type_terms[i]["format_terms"][j]["term_id"]+"|"+service_type_terms[i]["format_terms"][j]["name"]);
+                }
+            }
+        break;
+        }
+     }
+   $('#'+elt).data('typeahead').source =  f_edams[elt];
+   /*
+   $('#'+elt).typeahead({
+      source: f_edams[elt],
       updater: function (item) {
         var elts = item.split('|');
-        $("#type_selection_desc_upload").html("<span class=\"label label-info\">"+item+"</span>");
+        $("#"+elt+"_desc").html("<span class=\"label label-info\">"+item+"</span>");
         return elts[0];
       },
       matcher: function(item) {
-        return item.indexOf(this.query) != -1;
+        return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
       },
       minLength: 3
    });
-
+   */
+   /*
    $('#format_selection_upload').typeahead({
       source: f_edams,
       updater: function (item) {
@@ -441,9 +476,46 @@ $(function() {
       },
       minLength: 3
    });
+   */
 
 
+   }
 
+   /**
+   * Update list of available term types according to downloaded list
+   */
+   function updateTypes() {
+   $('#type_selection').typeahead({
+      source: t_edams,
+      updater: function (item) {
+        var elts = item.split('|');
+        $("#type_selection_desc").html("<span class=\"label label-info\">"+item+"</span>");
+        updateFormats("format_selection",elts[1]);
+        //return elts[0];
+        return item;
+      },
+      matcher: function(item) {
+        return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
+      },
+      minLength: 3
+   });
+
+   $('#type_selection_upload').typeahead({
+      source: t_edams,
+      updater: function (item) {
+        var elts = item.split('|');
+        updateFormats("format_selection_upload",elts[1]);
+        $("#type_selection_desc_upload").html("<span class=\"label label-info\">"+item+"</span>");
+        //return elts[0];
+        return item;
+      },
+      matcher: function(item) {
+        return item.toLowerCase().indexOf(this.query.toLowerCase()) != -1;
+      },
+      minLength: 3
+   });
+
+   }
 
 });
 

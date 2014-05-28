@@ -27,8 +27,8 @@ from bson import ObjectId
 
 
 from mobyle.data.manager.background import download, upload
-
-from  mobyle.data.manager.pluginmanager import DataPluginManager
+from mobyle.data.manager.pluginmanager import DataPluginManager
+from mobyle.common.config import Config
 
 from mf.views import MF_EDIT, MF_READ
 
@@ -52,6 +52,9 @@ def get_protocols():
     return Protocols._BASE_PROTOCOLS
 
 
+def use_delay():
+    mobyle_config = Config.config()
+    return asbool(mobyle_config.get("app:main","delay_background"))
 
 @view_config(route_name='data_plugin_upload')
 def data_plugin_upload(request):
@@ -95,8 +98,8 @@ def data_plugin_upload(request):
                 values, request=request)
 
     options = drop.set_options(request.session, options)
-    use_delay = asbool(request.registry.settings['delay_background'])
-    if use_delay:
+    #use_delay = asbool(request.registry.settings['delay_background'])
+    if use_delay():
         options['delay'] = True
         upload.delay(dfile, options)
     else:
@@ -281,7 +284,7 @@ def public_json(request):
     Get public datasets in JSON format
     '''
     datasets = []
-    
+
     datafilter = { 'public': True }
     datafilter = add_filter(datafilter, request)
 
@@ -467,7 +470,22 @@ def my_view(request):
     return {'user': get_user(request), 'uid': uid, 'protocols': get_protocols(),
             'dataset': dataset}
 
-@view_config(route_name='data_edit', renderer='mobyle.data.webmanager:templates/index.mako')
+
+@view_config(route_name='projects', renderer='json')
+def projects(request):
+    user = {}
+    projectlist = []
+    user = get_auth_user(request)
+    if user is not None:
+        try:
+            user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
+            for project in user_projects:
+                projectlist.append({"value": str(project['_id']), "text": project['name']})
+        except Exception:
+            raise HTTPForbidden()
+    return projectlist
+
+@view_config(route_name='data_edit', renderer='json')
 def data_edit(request):
     '''
     Update common dataset fields, not files
@@ -475,7 +493,7 @@ def data_edit(request):
     manager = ObjectManager()
 
     options = {}
-    
+
     dataset = None
 
     user = get_auth_user(request)
@@ -486,10 +504,10 @@ def data_edit(request):
         if dataset is None:
             raise HTTPNotFound()
         if not can_update_dataset(user, dataset):
-            raise HTTPFodbidden()
+            raise HTTPForbidden()
     except Exception:
         raise HTTPForbidden()
-
+    '''
     try:
         privacy = request.params.getone('privacy')
         if privacy == 'public':
@@ -511,6 +529,55 @@ def data_edit(request):
     except Exception:
         # Nothing to do
         pass
+    '''
+    try:
+        # Manage live edit, parameter per parameter
+        param = request.params.getone('name')
+        if param == 'description':
+            dataset['description'] = request.params.getone('value')
+        elif param == 'name':
+            dataset['name'] = request.params.getone('value')
+        elif param == 'type':
+            if 'properties' in dataset['data']:
+                # StructData
+                fpath = request.params.getone('value')
+                ont_term = request.params.getone('pk')
+                #dataset['data']['properties'][ont_term]['type'] = ont_term
+                dataset['data']['properties'][ont_term]['path'] = [fpath]
+                for elt in dataset['data']['files']:
+                    if elt['path'] == fpath:
+                        dataset['data']['properties'][ont_term]['size'] = elt['size']
+                        break
+                # Now check if all values are set
+                allset = True
+                for key in dataset['data']['properties']:
+                    if not dataset['data']['properties'][key]['path']:
+                            allset = False
+                            break
+                if allset:
+                    dataset['status'] = ObjectManager.READY
+            elif 'type' in dataset['data']:
+                dataset['data']['type'] = request.params.getone('value')
+        elif param == 'privacy':
+            privacy = request.params.getone('value')
+            if privacy == 'public':
+                dataset['public'] = True
+            else:
+                dataset['public'] = False
+        elif param == 'project':
+            options['project'] = request.params.getone('project')
+            if user is None:
+                raise HTTPForbidden()
+            project = connection.Project.find_one({"_id": ObjectId(options['project'])})
+            if project is None or not can_update_project(user, project):
+                raise HTTPForbidden()
+            else:
+                dataset['project'] = project['_id']
+        dataset.save()
+        return {"newValue": request.params.getone('value')}
+    except Exception:
+        # Nothing to do
+        pass
 
     try:
         options['project'] = request.params.getone('project')
@@ -518,11 +585,12 @@ def data_edit(request):
             raise HTTPForbidden()
         project = connection.Project.find_one({"_id": ObjectId(options['project'])})
         if project is None or not can_update_project(user, project):
-            raise HttpForbidden()
+            raise HTTPForbidden()
         else:
             dataset['project'] = project['_id']
     except Exception:
-        raise HTTPForbidden()
+        # Nothing to do
+        pass
 
     httpsession = request.session
     if "_id" in httpsession:
@@ -530,10 +598,10 @@ def data_edit(request):
 
     dataset.save()
 
-    request.session.flash('Dataset updated')
+    #request.session.flash('Dataset updated')
 
-    return {'user': get_user(request), 'protocols': get_protocols()}
-
+    #return {'user': get_user(request), 'protocols': get_protocols()}
+    return {}
 
 
 @view_config(route_name='upload_remote_data', renderer='mobyle.data.webmanager:templates/index.mako')
@@ -565,8 +633,15 @@ def upload_remote_data(request):
 
     try:
         options['type'] = request.params.getone('type')
+        tmp_elts = options['type'].split('|')
+        if len(tmp_elts) > 2:
+            options['type_name'] = tmp_elts[1]
+        else:
+            options['type_name'] = None
+        options['type'] = tmp_elts[0]
     except Exception:
         options['type'] = None
+
 
     try:
         options['name'] = request.params.getone('name')
@@ -580,6 +655,8 @@ def upload_remote_data(request):
 
     try:
         options['format'] = request.params.getone('format')
+        tmp_elts = options['format'].split('|')
+        options['format'] = tmp_elts[0]
     except Exception:
         options['format'] = 'auto'
 
@@ -590,7 +667,7 @@ def upload_remote_data(request):
             raise HTTPForbidden()
         project = connection.Project.find_one({"_id": ObjectId(options['project'])})
         if project is None or not can_update_project(user, project):
-            raise HttpForbidden()
+            raise HTTPForbidden()
     except Exception:
         options['project'] = None
 
@@ -653,8 +730,8 @@ def upload_remote_data(request):
     httpsession = request.session
     if "_id" in httpsession:
         options['user_id'] = httpsession['_id']
-    use_delay = asbool(request.registry.settings['delay_background'])
-    if use_delay:
+    #use_delay = asbool(request.registry.settings['delay_background'])
+    if use_delay():
         options['delay'] = True
         download.delay(options['rurl'], options)
     else:
@@ -705,9 +782,9 @@ def upload_data(request):
             raise HTTPForbidden()
         project = connection.Project.find_one({"_id": ObjectId(options['project'])})
         if project is None or not can_update_project(user, project):
-            raise HttpForbidden()
+            raise HTTPForbidden()
 
-    except Exception as e:
+    except Exception:
         #logging.error(str(e))
         raise HTTPForbidden()
         options['project'] = None
@@ -730,11 +807,19 @@ def upload_data(request):
 
     try:
         options['format'] = request.params.getone('format')
+        tmp_elts = options['format'].split('|')
+        options['format'] = tmp_elts[0]
     except Exception:
         options['format'] = 'auto'
 
     try:
         options['type'] = request.params.getone('type')
+        tmp_elts = options['type'].split('|')
+        if len(tmp_elts) > 2:
+            options['type_name'] = tmp_elts[1]
+        else:
+            options['type_name'] = None
+        options['type'] = tmp_elts[0]
     except Exception:
         options['type'] = None
 
@@ -748,7 +833,7 @@ def upload_data(request):
     except Exception:
         options['description'] = None
 
-    try:                
+    try:
         privacy = request.params.getone('privacy')
         if privacy == 'public':
             options['public'] = True
@@ -835,7 +920,8 @@ def handle_file_upload(request, options):
     '''
     results = []
     blob_keys = []
-    options['delay'] = asbool(request.registry.settings['delay_background'])
+    #options['delay'] = asbool(request.registry.settings['delay_background'])
+    options['delay'] = use_delay()
     for name, fieldStorage in request.POST.items():
         if type(fieldStorage) is unicode:
             continue

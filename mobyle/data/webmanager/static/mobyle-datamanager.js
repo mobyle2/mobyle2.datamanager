@@ -1,5 +1,12 @@
 
 
+
+$(document).ready(function() {
+    //$.fn.editable.defaults.mode = 'inline'
+    $('#description').editable();
+});
+
+
 /**
 * Display a dataset in a modal dialog
 *
@@ -11,15 +18,21 @@
 */
 function showDataSet(uid, url, mymodal, isowner) {
         $.getJSON(url + uid,function(data) {
-                infoHtml = '<h2>'+data['dataset']['name']+' - '+data['dataset']['project']+'</h2>';
-                if(data['dataset']['description']!=undefined) {
-                    infoHtml += "<div>"+data['dataset']['description']+"</div>";
-                }
+        infoHtml = "<div id=\"dataset\">";
+        infoHtml += '<h2><span class="canedit" id="name" data-type="text" data-pk="'+uid+'\" data-title="Enter the name of the file" data-url="data/'+uid+'/edit">'+data['dataset']['name']+'</span> - <span class="canedit" id="project" data-source="projects" data-type="select" data-pk="'+uid+'\" data-title="Enter the name of the project" data-url="data/'+uid+'/edit">'+data['dataset']['project']+'</span></h2>';
+        if(data['dataset']['description']!=undefined) {
+            infoHtml += "<div class=\"canedit\" id=\"description\" data-type=\"textarea\" data-pk=\""+uid+"\" data-title=\"Enter description\" data-url=\"data/"+uid+"/edit\">"+data['dataset']['description']+"</div>";
+        }
+        is_private = "public";
+        if (! data['dataset']['public']) {
+            is_private = "private";
+        }
+        infoHtml += '<div><strong>Privacy</strong>: <span <span class="canedit" data-source="[{value:\'public\', text:\'Public\'},{value:\'private\', text:\'Private\'}]" id="privacy" data-type="select" data-pk="'+uid+'" data-title="Select if data should be public or private" data-url="data/'+uid+'/edit">'+is_private+'</span>';
         if('size' in data['dataset']['data']) {
-                    infoHtml += '<div><h3>Size: '+bytesToSize(data['dataset']['data']['size'])+'</h3></div>';
+            infoHtml += '<div><strong>Size</strong>: '+bytesToSize(data['dataset']['data']['size'])+'</div>';
         }
         if('format' in data['dataset']['data']) {
-                infoHtml += '<div><h3>Format: '+data['dataset']['data']['format']+'</h3></div>';
+            infoHtml += '<div><strong>Format</strong>: '+data['dataset']['data']['format']+'</div>';
         }
         if('path' in data['dataset']['data']) {
             // This is a RefData (one or more file
@@ -55,7 +68,51 @@ function showDataSet(uid, url, mymodal, isowner) {
         }
         else {
             // This is a struct data or other... TODO
-            console.log("StructData not yet implemented");
+            var value = data['dataset']['data'];
+            infoHtml += "<div><h3>Files</h3>";
+            infoHtml += "<table class=\"table\">";
+            var available_types = "[";
+            $.each(value['properties'], function(index, subvalue) {
+                available_types+= '{ value:\''+index + '\',text: \''+ index +'\'},';
+            });
+            available_types += "]";
+            var available_files = "[";
+            for(i=0;i<value['files'].length;i++) {
+            //$.each(value['files'], function(subvalue) {
+                available_files+= '{ value:\''+value['files'][i]['path'] + '\',text: \''+ value['files'][i]['path']+' ('+ value['files'][i]['size']+')' +'\'},';
+            //});
+            }
+            available_files += "]";
+            $.each(value['properties'], function(index, subvalue) {
+                infoHtml += "<tr>";
+                var fpath = subvalue['path'][0];
+
+                //infoHtml += "<td>" + subvalue['path'][0] +" ("+ bytesToSize(subvalue['size']) +")"+ "</td>";
+                dowarn = '';
+                if(subvalue['path'].length==0) {
+                    dowarn = 'alert';
+                }
+                infoHtml += '<td><strong>'+index+'</strong>: <span class="canedit '+dowarn+'" data-source="'+available_files+'"  id="type" data-type="select" data-pk="'+index+'" data-title="Select the file or this type" data-url="data/'+uid+'/edit">'+subvalue["path"][0]+'</span></td>';
+
+                infoHtml += "<td>";
+                infoHtml += "<button class=\"btn btn-info download\""+
+                                " data-uid=\""+uid+"\""+
+                                " data-path=\""+fpath+"\">"+
+                                "<li class=\"icon-download\">"+
+                                "</li></button>";
+                if(isowner) {
+                    infoHtml += "<button class=\"btn btn-info btn-share\""+
+                                "data-uid=\""+uid+"\""+
+                                " data-path=\""+fpath+"\">"+
+                                "<li class=\"icon-share\"></li>Share</button>";
+                }
+                infoHtml += "</td>";
+
+                infoHtml += "</tr>";
+            });
+            infoHtml += "</table>";
+
+            infoHtml += "</div>";
         }
                 infoHtml += '<div id="token-share"></div>';
                 infoHtml += '<h3>History</h3>'
@@ -72,14 +129,21 @@ function showDataSet(uid, url, mymodal, isowner) {
                     var sec = a.getSeconds();
                     var time = date+','+month+' '+year+' '+hour+':'+min+':'+sec
 ;
-                    infoHtml += '<tr><td>'+time+'</td><td>'+val['message']+'</td></tr>'; 
+                    infoHtml += '<tr><td>'+time+'</td><td>'+val['message']+'</td></tr>';
                 });
                 infoHtml += '</table>';
+                infoHtml += '</div>';
                 $("#"+mymodal+' .modal-body').html(infoHtml);
                 mymodal = $("#"+mymodal);
                 mymodal.find('button').attr('data-uid', data['dataset']['uid']);
                 mymodal.modal({
                     show: true
+                });
+                $('#dataset').editable( {
+                    selector: ".canedit",
+                    success: function(response, newValue) {
+                    if(response.status == 'error') return response.msg; //msg will be shown in editable form
+                    }
                 });
         });
 

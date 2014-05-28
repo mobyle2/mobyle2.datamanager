@@ -16,6 +16,7 @@ def data_include(config):
     config.add_route('my.json', '/my.json')
     config.add_route('public', '/public')
     config.add_route('public.json', '/public.json')
+    config.add_route('projects', '/projects')
     config.add_route('data', '/data/{uid}')
     config.add_route('data_edit', '/data/{uid}/edit')
     config.add_route('data_token','/data/{uid}/token')
@@ -26,6 +27,29 @@ def data_include(config):
     config.add_route('data_plugin', '/plugin')
     config.add_route('data_plugin_upload', '/plugin/{plugin}/upload')
     config.add_route('data_plugin_download', '/plugin/{plugin}/download')
+
+    from mobyle.common import connection
+    from mf.dashboard import Dashboard
+    Dashboard.set_connection(connection.connection)
+    from mobyle.common.service_terms import ServiceTypeTerm
+    from mobyle.common.service import Service
+    from mobyle.common.mobyleConfig import MobyleConfig
+    Dashboard.add_dashboard([ServiceTypeTerm, Service], config)
+
+    from bson import json_util
+    from bson.objectid import ObjectId
+    import datetime
+    from pyramid.renderers import JSON
+    # automatically serialize bson ObjectId to Mongo extended JSON
+    json_renderer = JSON()
+
+    def objectId_adapter(obj, request):
+        return json_util.default(obj)
+    def datetime_adapter(obj, request):
+        return json_util.default(obj)
+    json_renderer.add_adapter(ObjectId, objectId_adapter)
+    json_renderer.add_adapter(datetime.datetime, datetime_adapter)
+    config.add_renderer('json', json_renderer)
 
 
 def objectmanager_include(config):
