@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from pyramid.config import Configurator
-
+from pyramid.request import Request
+from pyramid.request import Response
 import pyramid_beaker
 
 
@@ -17,12 +18,16 @@ def data_include(config):
     config.add_route('public', '/public')
     config.add_route('public.json', '/public.json')
     config.add_route('projects', '/projects')
+    config.add_route('oauth_auth', '/oauth/v2/authorize')
+    config.add_route('oauth_access', '/oauth/v2/token')
     config.add_route('data', '/data/{uid}')
     config.add_route('data_edit', '/data/{uid}/edit')
-    config.add_route('data_token','/data/{uid}/token')
-    config.add_route('data_download','data-download/{token}/*file')
+    config.add_route('data_token', '/data/{uid}/token')
+    config.add_route('data_download', 'data-download/{token}/*file')
 
-    config.add_static_view('static', 'mobyle.data.webmanager:static', cache_max_age=3600)
+    config.add_static_view('static',
+                            'mobyle.data.webmanager:static',
+                            cache_max_age=3600)
 
     config.add_route('data_plugin', '/plugin')
     config.add_route('data_plugin_upload', '/plugin/{plugin}/upload')
@@ -45,8 +50,10 @@ def data_include(config):
 
     def objectId_adapter(obj, request):
         return json_util.default(obj)
+
     def datetime_adapter(obj, request):
         return json_util.default(obj)
+
     json_renderer.add_adapter(ObjectId, objectId_adapter)
     json_renderer.add_adapter(datetime.datetime, datetime_adapter)
     config.add_renderer('json', json_renderer)
@@ -54,7 +61,7 @@ def data_include(config):
 
 def objectmanager_include(config):
     from  mobyle.common.objectmanager import ObjectManager
-    config.add_route('download','/download/{uid}/*file')
+    config.add_route('download', '/download/{uid}/*file')
     ObjectManager()
 
 
@@ -83,7 +90,10 @@ def main(global_config, **settings):
 
     config.include(objectmanager_include, route_prefix='/data-manager')
 
-    return config.make_wsgi_app()
+    #return config.make_wsgi_app()
+    from wsgicors import CORS
+    return CORS(config.make_wsgi_app(), headers="*", methods="*",
+                                        maxage="180", origin="*")
 
 
 

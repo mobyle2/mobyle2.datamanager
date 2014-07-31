@@ -2,7 +2,7 @@
 from pyramid.view import view_config
 #from pyramid.security import remember, authenticated_userid, forget
 
-from pyramid.httpexceptions import HTTPNotFound, HTTPForbidden
+from pyramid.httpexceptions import HTTPNotFound, HTTPForbidden, HTTPFound
 from pyramid.renderers import render_to_response
 from pyramid.response import Response, FileResponse
 from pyramid.settings import asbool
@@ -14,6 +14,7 @@ import logging
 import os
 import pairtree
 import tempfile
+import socket
 from copy import deepcopy
 
 from bson import json_util
@@ -22,6 +23,7 @@ import mobyle.common
 from mobyle.common.connection import connection
 from mobyle.common.mobyleConfig import MobyleConfig
 from mobyle.common.objectmanager import ObjectManager, AccessMode
+from mobyle.common.tokens import Token
 
 from bson import ObjectId
 
@@ -32,8 +34,10 @@ from mobyle.common.config import Config
 
 from mf.views import MF_EDIT, MF_READ
 
+
 class Protocols:
     _BASE_PROTOCOLS = None
+
 
 def get_protocols():
     """Return the list of allowed protocols"""
@@ -45,7 +49,7 @@ def get_protocols():
     if allowed_protocols:
         allowed_list = allowed_protocols.split(",")
         for protocol in allowed_list:
-            Protocols._BASE_PROTOCOLS.append(protocol.strip()+"://")
+            Protocols._BASE_PROTOCOLS.append(protocol.strip() + "://")
     if mob_config['data']['local']['allowed_copy']:
         Protocols._BASE_PROTOCOLS.append('file://')
         Protocols._BASE_PROTOCOLS.append('symlink://')
@@ -54,7 +58,8 @@ def get_protocols():
 
 def use_delay():
     mobyle_config = Config.config()
-    return asbool(mobyle_config.get("app:main","delay_background"))
+    return asbool(mobyle_config.get("app:main", "delay_background"))
+
 
 @view_config(route_name='data_plugin_upload')
 def data_plugin_upload(request):
@@ -63,8 +68,6 @@ def data_plugin_upload(request):
     '''
     httpsession = request.session
     #import mobyle.data.manager.plugins
-
-    #TODO check I own the dataset
 
     options = {}
     try:
@@ -75,7 +78,7 @@ def data_plugin_upload(request):
         options['id'] = uid
         #uid = dataset['uid']
         options['name'] = dataset['name']
-        dfile = dataset.get_file_path()  + "/" + uid
+        dfile = dataset.get_file_path() + "/" + uid
         #dfile = manager.get_storage_path() + \
         #        '/' + pairtree.id2path(uid) + "/" + uid
     except Exception as e:
@@ -104,7 +107,7 @@ def data_plugin_upload(request):
         upload.delay(dfile, options)
     else:
         options['delay'] = False
-        upload(dfile,options)
+        upload(dfile, options)
     request.session.flash('Upload to DropBox in progress')
     values = my(request)
     return render_to_response('mobyle.data.webmanager:templates/my.mako',
@@ -121,6 +124,14 @@ def get_auth_user(request):
     """
     user = None
     httpsession = request.session
+    if request.authorization is not None:
+        (type, bearer) = request.authorization
+        token = connection.Token.find_one({'token': bearer})
+        if token and token.check_validity(False):
+            user = connection.User.find_one({'email': token['data']['email']})
+            return user
+        else:
+            return None
     try:
         if "_id" in httpsession:
             user = connection.User.find_one({'_id': ObjectId(httpsession['_id'])})
@@ -129,6 +140,7 @@ def get_auth_user(request):
     except Exception as e:
         logging.info("Could not match user:" + str(e))
     return user
+
 
 def can_update_project(user, project):
     """
@@ -171,6 +183,7 @@ def can_read_project(user, project):
             allowed = True
     return allowed
 
+
 def can_read_dataset(user, data):
     """
     Checks that user can read a dataset in a project
@@ -187,6 +200,7 @@ def can_read_dataset(user, data):
     if project is None:
         return False
     return can_read_project(user, project)
+
 
 def can_update_dataset(user, data):
     """
@@ -221,9 +235,10 @@ def data_token(request):
     except Exception:
         lifetime = 3600 * 24
     file_path = []
-    token = ObjectManager.get_token(did, file_path , AccessMode.READONLY,
+    token = ObjectManager.get_token(did, file_path, AccessMode.READONLY,
                                     lifetime)
     return {'token': token}
+
 
 @view_config(route_name='download')
 def direct_download(request):
@@ -234,31 +249,32 @@ def direct_download(request):
     #file_path = ','.join(str(i) for i in request.matchdict['file'])
     dataset = connection.ProjectData.find_one({"_id": ObjectId(data_uid)})
     if dataset is None:
-        raise HttpNotFound()
+        raise HTTPNotFound()
     if not dataset['public']:
         user = get_auth_user(request)
-        if not user or not can_read_dataset(user,dataset):
+        if not user or not can_read_dataset(user, dataset):
             raise HTTPForbidden()
     file_path = '/'.join(str(i) for i in request.matchdict['file'])
     file_path = os.path.join(dataset.get_file_path(),
                             file_path)
     if not os.path.exists(file_path):
         raise HTTPNotFound()
-    logging.debug("request to download file "+file_path)
+    logging.debug("request to download file " + file_path)
     if dataset['data']['format'] is None:
         mime_type = "text/plain"
     else:
-        mime_type = 'application/'+dataset['data']['format']
+        mime_type = 'application/' + dataset['data']['format']
     response = FileResponse(file_path,
                                 request=request,
                                 content_type=str(mime_type))
     return response
 
+
 @view_config(route_name='data_download', renderer='json')
 def data_download(request):
     token = request.matchdict['token']
     file_path = '/'.join(str(i) for i in request.matchdict['file'])
-    logging.debug("request to download path "+file_path+" for token " \
+    logging.debug("request to download path " + file_path + " for token " \
                   + token)
     data_token = connection.Token.find_one({"token": token})
     if data_token.check_validity(False):
@@ -269,7 +285,7 @@ def data_download(request):
         if dataset['data']['format'] is None:
             mime_type = "text/plain"
         else:
-            mime_type = 'application/'+dataset['data']['format']
+            mime_type = 'application/' + dataset['data']['format']
         response = FileResponse(file_path,
                                 request=request,
                                 content_type=str(mime_type))
@@ -278,14 +294,15 @@ def data_download(request):
     else:
         raise HTTPForbidden()
 
-@view_config(route_name='public.json',renderer='json')
+
+@view_config(route_name='public.json', renderer='json')
 def public_json(request):
     '''
     Get public datasets in JSON format
     '''
     datasets = []
 
-    datafilter = { 'public': True }
+    datafilter = {'public': True}
     datafilter = add_filter(datafilter, request)
 
     projectdata = connection.ProjectData.find(datafilter)
@@ -294,7 +311,7 @@ def public_json(request):
         if data['status'] == 2:
             datasets.append(data)
     return Response(json.dumps(datasets,
-                    default=json_util.default),content_type="application/json")
+                    default=json_util.default), content_type="application/json")
 
 
 @view_config(route_name='public', renderer='mobyle.data.webmanager:templates/public.mako')
@@ -303,7 +320,7 @@ def public(request):
     View listing of public datasets
     '''
     # Datasets will be loaded asynchronously to avoid page loading time
-    projects = connection.Project.find({},{'name': 1})
+    projects = connection.Project.find({}, {'name': 1})
     projectsname = {}
     for project in projects:
         projectsname[str(project['_id'])] = project['name']
@@ -325,7 +342,7 @@ def my_json(request):
                 for project in user_projects:
                     projects.append(project['_id'])
 
-                dfilter = {"project" : {"$in": projects}}
+                dfilter = {"project": {"$in": projects}}
                 dfilter = add_filter(dfilter, request)
                 projectdata = connection.ProjectData.find(dfilter)
                 # TODO get user owned datasets
@@ -341,6 +358,7 @@ def my_json(request):
     return Response(json.dumps(datasets,
                         default=json_util.default),
                         content_type="application/json")
+
 
 def add_filter(dfilter, request):
     '''
@@ -358,13 +376,12 @@ def add_filter(dfilter, request):
         if key == 'project':
             value = ObjectId(value)
         if key == 'type' or key == 'format':
-            key = 'data.'+key
+            key = 'data.' + key
         dfilter[key] = value
 
     except Exception:
         logging.debug("no filter applied")
     return dfilter
-
 
 
 @view_config(route_name='my', renderer='mobyle.data.webmanager:templates/my.mako')
@@ -374,7 +391,7 @@ def my(request):
     '''
     user = {}
     projectdata = {}
-    httpsession = request.session
+    #httpsession = request.session
     projectsname = {}
     user = get_auth_user(request)
     if user is not None:
@@ -388,7 +405,7 @@ def my(request):
         except Exception as e:
             logging.error("ProjectData error: " + str(e))
             return {'user': user, 'data': []}
-    return {'user': user, 'data': projectdata, 'projectsname' : projectsname }
+    return {'user': user, 'data': projectdata, 'projectsname': projectsname}
 
 
 @view_config(route_name='logout', renderer='mobyle.data.webmanager:templates/index.mako')
@@ -424,7 +441,7 @@ def login(request):
         if "_id" in httpsession:
             user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
             for up in user_projects:
-                projects.append({"name": up["name"],"id": up["_id"]})
+                projects.append({"name": up["name"], "id": up["_id"]})
             user['projects'] = projects
     except Exception as e:
         logging.error("error with projects: " + str(e))
@@ -436,16 +453,14 @@ def get_user(request):
     '''
     Return user information
     '''
-    httpsession = request.session
+    #httpsession = request.session
     user = get_auth_user(request)
     if user is not None:
-    #if "_id" in httpsession:
-        #user = connection.User.find_one({'_id' : ObjectId(httpsession['_id'])  })
         projects = []
         try:
             user_projects = connection.Project.find({"users": {"$elemMatch": {'user': user['_id']}}})
             for up in user_projects:
-                projects.append({"name": up["name"],"id": up["_id"]})
+                projects.append({"name": up["name"], "id": up["_id"]})
             user['projects'] = projects
         except Exception as e:
             logging.error("error with projects: " + str(e))
@@ -484,6 +499,7 @@ def projects(request):
         except Exception:
             raise HTTPForbidden()
     return projectlist
+
 
 @view_config(route_name='data_edit', renderer='json')
 def data_edit(request):
@@ -630,7 +646,6 @@ def upload_remote_data(request):
     except Exception:
         options['public'] = False
 
-
     try:
         options['type'] = request.params.getone('type')
         tmp_elts = options['type'].split('|')
@@ -641,7 +656,6 @@ def upload_remote_data(request):
         options['type'] = tmp_elts[0]
     except Exception:
         options['type'] = None
-
 
     try:
         options['name'] = request.params.getone('name')
@@ -700,13 +714,11 @@ def upload_remote_data(request):
     except Exception:
         options['group'] = False
 
-
-    #files = {}
     if options['id'] is None:
         if 'name' in options and options['name'] is not None:
             rurl = options['name']
         else:
-            rurl = options['rurl'].replace('/','_')
+            rurl = options['rurl'].replace('/', '_')
         new_dataset = manager.add(rurl, options)
         if new_dataset is not None:
             options['id'] = str(new_dataset['_id'])
@@ -952,3 +964,100 @@ def handle_file_upload(request, options):
         results.append(result)
     return results
 
+
+@view_config(route_name='oauth_access')
+def oauth_access(request):
+    """
+    Manage oauth token access
+
+    http://tools.ietf.org/html/rfc6749# 4.2
+    """
+    values = {}
+    try:
+        values['code'] = request.params.getone(u'code')
+        values['client_id'] = request.params.getone(u'client_id')
+        values['redirect_uri'] = request.params.getone(u'redirect_uri')
+        values['grant_type'] = request.params.getone(u'grant_type')
+        if values['grant_type'] == "authorization_code":
+            my_token = connection.Token.find_one({"token": values['code']})
+            if my_token and my_token.check_validity() and \
+                my_token['data']['redirect_uri'] == values['redirect_uri']:
+                # Generate access token
+                email = my_token['data']['email']
+                my_token = connection.Token()
+                my_token.generate(3600)
+                my_token['data']['allow_refresh'] = True
+                my_token['data']['redirect_uri'] = values['redirect_uri']
+                my_token['data']['email'] = email
+                my_token.save()
+                token = my_token['token']
+                return HTTPFound(location=values["redirect_uri"] +
+                    "?access_token=" + token +
+                    "&token_type=bearer&expires_in=3600" +
+                    "&email=" + my_token['data']['email'] +
+                    "&refresh_token=" + token)
+            else:
+                return HTTPFound(location=values["redirect_uri"] +
+                    "?error=invalid_grant")
+        if values['grant_type'] == 'refresh_token':
+            my_token = connection.Token.find_one({"token": values['code']})
+            if my_token and my_token.check_validity(False):
+                my_token.renew(3600)
+                my_token.save()
+                token = my_token['token']
+                return HTTPFound(location=values["redirect_uri"] +
+                    "?access_token=" + token +
+                    "&token_type=bearer,expires_in=3600,refresh_token=" + token)
+            else:
+                return HTTPFound(location=values["redirect_uri"] +
+                    "?error=invalid_grant")
+    except Exception:
+        return HTTPForbidden("Error in request")
+    return HTTPForbidden()
+
+
+@view_config(route_name='oauth_auth',
+    renderer='mobyle.data.webmanager:templates/oauth_login.mako')
+def oauth_auth(request):
+    """
+    Manage oauth authentication step, ask for authentication if not already
+    logged in, else redirect to redirect_url with redirect_url parameter
+    http://tools.ietf.org/html/rfc6749# 4.1
+    """
+    values = {}
+    try:
+        values['response_type'] = request.params.getone("response_type")
+        if values['response_type'] != "code":
+            return HTTPForbidden("wrong response_type parameter " +
+                                    values['response_type'])
+        values['state'] = request.params.getone("state")
+        values['client_id'] = request.params.getone("client_id")
+        values['redirect_uri'] = request.params.getone("redirect_uri")
+        values['scope'] = request.params.getone("scope")
+        values['requested_scope'] = values['scope'].replace('drive',
+                                                            'data files')
+        values['requested_scope'] = \
+                values['requested_scope'].replace('user:email', 'email address')
+        values['referer'] = request.remote_addr
+        try:
+            values['referer'], alias, addresslist = \
+                                        socket.gethostbyaddr(values['referer'])
+        except Exception:
+            values['referer'] = request.remote_addr
+    except Exception:
+        return HTTPForbidden("missing parameter in oauth request ")
+    user = get_auth_user(request)
+    if not user:
+        return render_to_response(
+            'mobyle.data.webmanager:templates/oauth_login.mako',
+            values, request=request)
+    else:
+        my_token = connection.Token()
+        my_token.generate(600)
+        my_token['data']['scope'] = values['scope']
+        my_token['data']['redirect_uri'] = values['redirect_uri']
+        my_token['data']['email'] = user['email']
+        my_token.save()
+        token = my_token['token']
+        return HTTPFound(location=values["redirect_uri"] +
+                    "?code=" + token + "&state=" + values['state'])
