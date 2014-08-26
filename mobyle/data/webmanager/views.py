@@ -619,8 +619,8 @@ def data_edit(request):
     #return {'user': get_user(request), 'protocols': get_protocols()}
     return {}
 
-@view_config(route_name='data_upload', renderer='json')
-def data_upload(request):
+@view_config(route_name='data_update', request_method='PUT', renderer='json')
+def data_update(request):
     '''
     Upload a remote file to update a file in a dataset
     '''
@@ -632,29 +632,45 @@ def data_upload(request):
 
     user = get_auth_user(request)
 
+    options['format'] = None
+    options['rurl'] = None
+    try:
+        options['rurl'] = request.params.getone('rurl')
+    except Exception:
+        options['rurl'] = None
+
+    try:
+        options['msg'] = request.params.getone('msg')
+    except Exception:
+        options['msg'] = 'Update from remote server '+request.remote_addr
+
     try:
         did = request.matchdict['uid']
-        options['rurl'] = request.params.getone('rurl')
-        options['msg'] = request.params.getone('msg')
         file_path = '/'.join(str(i) for i in request.matchdict['file'])
         options['name'] = file_path
-        # TODO could manage upload of content directly (file upload)
         dataset = connection.ProjectData.find_one({"_id": ObjectId(did)})
         if dataset is None:
             raise HTTPNotFound()
+        options['project']= str(dataset['project'])
+        options['id'] = str(dataset['_id'])
         if not can_update_dataset(user, dataset):
             raise HTTPForbidden()
     except Exception:
         raise HTTPForbidden()
     options['group'] = False
     options['uncompress'] = False
+    options['status'] = ObjectManager.UPDATE
 
-    if use_delay():
-        options['delay'] = True
-        download.delay(options['rurl'], options)
+    if options['rurl']:
+        if use_delay():
+            options['delay'] = True
+            download.delay(options['rurl'], options)
+        else:
+            options['delay'] = False
+            download(options['rurl'], options)
     else:
-        options['delay'] = False
-        download(options['rurl'], options)
+        files = handle_file_upload(request, options)
+        return {'files': files}
 
     return { 'msg': 'download of '+options['rurl']+' to file '+
               file_path+ ' in     progress' }
@@ -946,9 +962,14 @@ def write_blob(data, info, options):
     if options['group']:
         logging.debug('Should group data')
 
-    dataset = ObjectManager.store(info['name'], file_path, options)
-    logging.info(dataset)
-    if dataset['status'] == ObjectManager.UNCOMPRESS:
+    if 'status' in options and options['status'] == ObjectManager.UPDATE:
+        options['files'] = [ file_path ]
+        options['status'] = ObjectManager.DOWNLOADED
+        dataset = ObjectManager.update(options['status'], options)
+    else:
+        dataset = ObjectManager.store(info['name'], file_path, options)
+    #logging.info(dataset)
+    if options['status'] == ObjectManager.UNCOMPRESS:
         # delay decompression
         from mobyle.data.manager.background import uncompress
         newoptions = deepcopy(options)
@@ -1025,7 +1046,7 @@ def oauth_access(request):
                 # Generate access token
                 email = my_token['data']['email']
                 my_token = connection.Token()
-                my_token.generate(3600)
+                my_token.generate(3600*24)
                 my_token['data']['allow_refresh'] = True
                 my_token['data']['redirect_uri'] = values['redirect_uri']
                 my_token['data']['email'] = email

@@ -6,6 +6,14 @@ $(document).ready(function() {
     $('#description').editable();
 });
 
+function bytesToSize(bytes) {
+    var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    if (bytes == 0) return 'n/a';
+    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+};
+
+
 
 /**
 * Display a dataset in a modal dialog
@@ -79,7 +87,7 @@ function showDataSet(uid, url, mymodal, isowner) {
             var available_files = "[";
             for(i=0;i<value['files'].length;i++) {
             //$.each(value['files'], function(subvalue) {
-                available_files+= '{ value:\''+value['files'][i]['path'] + '\',text: \''+ value['files'][i]['path']+' ('+ value['files'][i]['size']+')' +'\'},';
+                available_files+= '{ value:\''+value['files'][i]['path'] + '\',text: \''+ value['files'][i]['path']+' ('+ bytesToSize(value['files'][i]['size'])+')' +'\'},';
             //});
             }
             available_files += "]";
@@ -92,7 +100,7 @@ function showDataSet(uid, url, mymodal, isowner) {
                 if(subvalue['path'].length==0) {
                     dowarn = 'alert';
                 }
-                infoHtml += '<td><strong>'+index+'</strong>: <span class="canedit '+dowarn+'" data-source="'+available_files+'"  id="type" data-type="select" data-pk="'+index+'" data-title="Select the file or this type" data-url="data/'+uid+'/edit">'+subvalue["path"][0]+'</span></td>';
+                infoHtml += '<td><strong>'+index+'</strong>: <span class="canedit '+dowarn+'" data-source="'+available_files+'"  id="type" data-type="select" data-pk="'+index+'" data-title="Select the file or this type" data-url="data/'+uid+'/edit">'+subvalue["path"][0]+' ('+bytesToSize(subvalue["size"])+') ' + '</span></td>';
 
                 infoHtml += "<td>";
                 infoHtml += "<button class=\"btn btn-info download\""+

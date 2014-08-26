@@ -23,7 +23,7 @@ def data_include(config):
     config.add_route('data', '/data/{uid}')
     config.add_route('data_edit', '/data/{uid}/edit')
     config.add_route('data_token', '/data/{uid}/token')
-    config.add_route('data_upload', '/data/{uid}/upload')
+    config.add_route('data_update', '/data/{uid}/upload/*file')
     config.add_route('data_download', '/data-download/{token}/*file')
 
     config.add_static_view('static',
