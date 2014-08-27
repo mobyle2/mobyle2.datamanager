@@ -1034,12 +1034,16 @@ def oauth_access(request):
     http://tools.ietf.org/html/rfc6749# 4.2
     """
     values = {}
+    is_json = False
+    if 'application/json' in request.accept:
+        is_json = True
     try:
-        values['code'] = request.params.getone(u'code')
-        values['client_id'] = request.params.getone(u'client_id')
-        values['redirect_uri'] = request.params.getone(u'redirect_uri')
+        if not is_json:
+            values['redirect_uri'] = request.params.getone(u'redirect_uri')
         values['grant_type'] = request.params.getone(u'grant_type')
         if values['grant_type'] == "authorization_code":
+            values['client_id'] = request.params.getone(u'client_id')
+            values['code'] = request.params.getone(u'code')
             my_token = connection.Token.find_one({"token": values['code']})
             if my_token and my_token.check_validity() and \
                 my_token['data']['redirect_uri'] == values['redirect_uri']:
@@ -1052,26 +1056,55 @@ def oauth_access(request):
                 my_token['data']['email'] = email
                 my_token.save()
                 token = my_token['token']
-                return HTTPFound(location=values["redirect_uri"] +
+                if not is_json:
+                    return HTTPFound(location=values["redirect_uri"] +
                     "?access_token=" + token +
                     "&token_type=bearer&expires_in=3600" +
                     "&email=" + my_token['data']['email'] +
                     "&refresh_token=" + token)
+                else:
+                    access = { 'access_token': token,
+                                'token_type': 'bearer',
+                                'expires_in': 3600,
+                                'email': my_token['data']['email'],
+                                'refresh_token': token}
+                    return Response(body=json.dumps(access),
+                    content_type='application/json');
+
             else:
-                return HTTPFound(location=values["redirect_uri"] +
+                if is_json:
+                    access = { 'error': 'invalid_grant' }
+                    return Response(body=json.dumps(access),
+                    content_type='application/json');
+                else:
+                    return HTTPFound(location=values["redirect_uri"] +
                     "?error=invalid_grant")
         if values['grant_type'] == 'refresh_token':
+            values['code'] = request.params.getone(u'refresh_token')
             my_token = connection.Token.find_one({"token": values['code']})
             if my_token and my_token.check_validity(False):
                 my_token.renew(3600)
                 my_token.save()
                 token = my_token['token']
-                return HTTPFound(location=values["redirect_uri"] +
+                if not is_json:
+                    return HTTPFound(location=values["redirect_uri"] +
                     "?access_token=" + token +
                     "&token_type=bearer,expires_in=3600,refresh_token=" + token)
+                else:
+                    access = { 'access_token': token,
+                                'token-type': 'bearer',
+                                'expires_in': 3600,
+                                'refresh_token': token }
+                    return Response(body=json.dumps(access),
+                    content_type='application/json');
             else:
-                return HTTPFound(location=values["redirect_uri"] +
+                if not is_json:
+                    return HTTPFound(location=values["redirect_uri"] +
                     "?error=invalid_grant")
+                else:
+                    access = { 'error': 'invalid_grant' }
+                    return Response(body=json.dumps(access),
+                    content_type='application/json');
     except Exception:
         return HTTPForbidden("Error in request")
     return HTTPForbidden()
