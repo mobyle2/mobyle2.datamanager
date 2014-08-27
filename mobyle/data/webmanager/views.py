@@ -969,7 +969,7 @@ def write_blob(data, info, options):
     else:
         dataset = ObjectManager.store(info['name'], file_path, options)
     #logging.info(dataset)
-    if options['status'] == ObjectManager.UNCOMPRESS:
+    if 'status' in options and options['status'] == ObjectManager.UNCOMPRESS:
         # delay decompression
         from mobyle.data.manager.background import uncompress
         newoptions = deepcopy(options)
