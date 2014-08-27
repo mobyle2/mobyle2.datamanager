@@ -1035,8 +1035,10 @@ def oauth_access(request):
     """
     values = {}
     is_json = False
-    if 'application/json' in request.accept:
-        is_json = True
+    for mime in request.accept:
+        if 'application/json' == mime:
+            is_json = True
+            break
     try:
         if not is_json:
             values['redirect_uri'] = request.params.getone(u'redirect_uri')
