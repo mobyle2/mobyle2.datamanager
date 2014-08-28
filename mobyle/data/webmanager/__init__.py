@@ -23,8 +23,10 @@ def data_include(config):
     config.add_route('data', '/data/{uid}')
     config.add_route('data_edit', '/data/{uid}/edit')
     config.add_route('data_token', '/data/{uid}/token')
-    config.add_route('data_update', '/data/{uid}/upload/*file')
-    config.add_route('data_download', '/data-download/{token}/*file')
+    config.add_route('data_access', '/data/{uid}/raw/*file')
+    config.add_route('token_access', '/token/{token}/raw/*file')
+    #config.add_route('data_update', '/data/{uid}/upload/*file')
+    #config.add_route('data_download', '/data-download/{token}/*file')
 
     config.add_static_view('static',
                             'mobyle.data.webmanager:static',
@@ -62,7 +64,7 @@ def data_include(config):
 
 def objectmanager_include(config):
     from  mobyle.common.objectmanager import ObjectManager
-    config.add_route('download', '/download/{uid}/*file')
+    #config.add_route('download', '/download/{uid}/*file')
     ObjectManager()
 
 

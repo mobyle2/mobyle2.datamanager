@@ -57,7 +57,7 @@ $(function(){
 $(document).on("click",'.download', function(e) {
         uid = $(this).attr('data-uid');
         fpath = $(this).attr('data-path');
-        window.open("${request.route_url('main')}download/"+ uid + '/' + fpath);
+        window.open("${request.route_url('main')}data/"+ uid + '/raw/' + fpath);
 });
 
 var projects = {};

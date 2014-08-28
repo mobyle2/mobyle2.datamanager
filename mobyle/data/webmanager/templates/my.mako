@@ -90,7 +90,7 @@ $('.btn-data-plugin').click(function(e) {
 $(document).on("click",'.download', function(e) {
         uid = $(this).attr('data-uid');
         fpath = $(this).attr('data-path');
-        window.open("${request.route_url('main')}download/"+ uid + "/" + fpath);
+        window.open("${request.route_url('main')}data/"+ uid + "/raw/" + fpath);
 });
 
 $(document).on("click",'.btn-share', function(e) {
@@ -99,11 +99,11 @@ $(document).on("click",'.btn-share', function(e) {
         var token_url = "${route_url('main',request)}data/"+ uid + "/token";
         $.getJSON(token_url,function(data) {
             if(file_path=="") {
-                var download_url = "${route_url('main',request)}data-download/"+data['token']+"/";
+                var download_url = "${route_url('main',request)}token/"+data['token']+"/raw/";
                $("#token-share").html("You can now share this file for public download with the following url for the next 24 hours:<br/>"+download_url+"</a>/file_name_or_pat");
             }
             else {
-                var download_url = "${route_url('main',request)}data-download/"+data['token']+"/"+file_path; 
+                var download_url = "${route_url('main',request)}token/"+data['token']+"/raw/"+file_path; 
                 $("#token-share").html("You can now share this file for public download with the following url for the next 24 hours:<br/><a href=\""+download_url+"\">"+download_url+"</a>");
             }
         });

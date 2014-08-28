@@ -240,7 +240,8 @@ def data_token(request):
     return {'token': token}
 
 
-@view_config(route_name='download')
+#@view_config(route_name='download')
+@view_config(route_name='data_access', request_method='GET')
 def direct_download(request):
     """
     Manage the download of a dataset for public datasets or user only datasets
@@ -270,7 +271,8 @@ def direct_download(request):
     return response
 
 
-@view_config(route_name='data_download', renderer='json')
+#@view_config(route_name='data_download', request_method='GET')
+@view_config(route_name='token_access', request_method='GET')
 def data_download(request):
     token = request.matchdict['token']
     file_path = '/'.join(str(i) for i in request.matchdict['file'])
@@ -619,7 +621,7 @@ def data_edit(request):
     #return {'user': get_user(request), 'protocols': get_protocols()}
     return {}
 
-@view_config(route_name='data_update', request_method='PUT', renderer='json')
+@view_config(route_name='data_access', request_method='PUT', renderer='json')
 def data_update(request):
     '''
     Upload a remote file to update a file in a dataset
