@@ -9,7 +9,7 @@ from celery import Celery
 from celery.task import task
 from mobyle.common.config import Config
 from mobyle.common.objectmanager import ObjectManager
-from mobyle.common.mobyleError import MobyleError
+from mobyle.common.error import InternalError
 
 from  mobyle.data.manager.pluginmanager import DataPluginManager
 from mobyle.common.connection import connection
@@ -73,7 +73,7 @@ def download(furl, options=None):
             options['files'] = [file_path]
             dataset = mngr.update(ObjectManager.DOWNLOADED, options)
             if len(dataset) > 1:
-                raise MobyleError("download manage only one file")
+                raise InternalError("download manage only one file")
             if dataset[0]['status'] == ObjectManager.UNCOMPRESS:
                 # delay decompression
                 options['delete'] = True
@@ -104,7 +104,7 @@ def download(furl, options=None):
                     dataset = mngr.update(ObjectManager.DOWNLOADED, options)
                     # We manage here one file at a time, so only one dataset
                     if len(dataset) > 1:
-                        raise MobyleError("download manage only one file")
+                        raise InternalError("download manage only one file")
                     if dataset[0]['status'] == ObjectManager.UNCOMPRESS:
                         # delay decompression
                         if options['delay']:
@@ -120,7 +120,7 @@ def download(furl, options=None):
             options['files'] = [file_path]
             dataset = mngr.update(ObjectManager.DOWNLOADED, options)
             if len(dataset) > 1:
-                raise MobyleError("download manage only one file")
+                raise InternalError("download manage only one file")
             if dataset[0]['status'] == ObjectManager.UNCOMPRESS:
                 # delay decompression
                 if options['delay']:
