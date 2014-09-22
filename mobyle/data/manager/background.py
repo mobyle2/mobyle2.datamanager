@@ -160,7 +160,7 @@ def uncompress(f, options=None):
     else:
         mngr.update(ObjectManager.ERROR, options)
         return
-
+    options['status'] = ObjectManager.UNCOMPRESSED
     options['files'] = []
     for root, dirnames, filenames in os.walk(dir_path):
         for filename in filenames:
@@ -170,6 +170,8 @@ def uncompress(f, options=None):
         if 'delete' in options and options['delete']:
                 os.remove(f)
     except Exception as e:
+        logging.error("#OSALLOU")
+        logging.error(e)
         mngr.update(ObjectManager.ERROR, options)
 
 

@@ -261,10 +261,10 @@ def direct_download(request):
     if not os.path.exists(file_path):
         raise HTTPNotFound()
     logging.debug("request to download file " + file_path)
-    if dataset['data']['format'] is None:
+    if not dataset['data']['type']['format_terms']:
         mime_type = "text/plain"
     else:
-        mime_type = 'application/' + dataset['data']['format']
+        mime_type = 'application/' + dataset['data']['type']['format_terms'][0]
     response = FileResponse(file_path,
                                 request=request,
                                 content_type=str(mime_type))
@@ -347,10 +347,10 @@ def data_download(request):
         dataset = connection.ProjectData.find_one({"_id": ObjectId(data_uid)})
         # Get full path to the file
         file_path = os.path.join(dataset.get_file_path(), file_path)
-        if dataset['data']['format'] is None:
+        if not dataset['data']['type']['format_terms']:
             mime_type = "text/plain"
         else:
-            mime_type = 'application/' + dataset['data']['format']
+            mime_type = 'application/' + dataset['data']['type']['format_terms'][0]
         response = FileResponse(file_path,
                                 request=request,
                                 content_type=str(mime_type))
@@ -440,8 +440,12 @@ def add_filter(dfilter, request):
         value = request.params.getone(key)
         if key == 'project':
             value = ObjectId(value)
-        if key == 'type' or key == 'format':
-            key = 'data.' + key
+        if key == 'type':
+            dfilter['data.type.data_terms'] = {'$in' : [value]}
+            return dfilter
+        if key == 'format':
+            dfilter['data.type.format_terms'] = {'$in' : [value]}
+            return dfilter
         dfilter[key] = value
 
     except Exception:
@@ -624,7 +628,7 @@ def data_edit(request):
                 fpath = request.params.getone('value')
                 ont_term = request.params.getone('pk')
                 #dataset['data']['properties'][ont_term]['type'] = ont_term
-                dataset['data']['properties'][ont_term]['path'] = [fpath]
+                dataset['data']['properties'][ont_term]['path'] = fpath
                 for elt in dataset['data']['files']:
                     if elt['path'] == fpath:
                         dataset['data']['properties'][ont_term]['size'] = elt['size']
@@ -1034,8 +1038,10 @@ def write_blob(data, info, options):
     else:
         dataset = ObjectManager.store(info['name'], file_path, options)
     #logging.info(dataset)
+
     if 'status' in options and options['status'] == ObjectManager.UNCOMPRESS:
         # delay decompression
+
         from mobyle.data.manager.background import uncompress
         newoptions = deepcopy(options)
         newoptions['id'] = str(dataset['_id'])
@@ -1043,10 +1049,10 @@ def write_blob(data, info, options):
         use_delay = options['delay']
         if use_delay:
             newoptions['delay'] = True
-            uncompress.delay(dataset.get_file_path()+"/"+str(dataset['data']['path'][0]), newoptions)
+            uncompress.delay(dataset.get_file_path()+"/"+str(dataset['data']['path']), newoptions)
         else:
             newoptions['delay'] = False
-            uncompress(dataset.get_file_path()+"/"+str(dataset['data']['path'][0]), newoptions)
+            uncompress(dataset.get_file_path()+"/"+str(dataset['data']['path']), newoptions)
 
     os.remove(file_path)
     return file_path

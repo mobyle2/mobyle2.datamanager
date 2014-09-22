@@ -79,7 +79,7 @@ $(document).on('click','.delete',function(e) {
             success: function() {
                $("#tr-"+uid).remove();
             }
-        }); 
+        });
 });
 
 
@@ -103,7 +103,7 @@ $(document).on("click",'.btn-share', function(e) {
                $("#token-share").html("You can now share this file for public download with the following url for the next 24 hours:<br/>"+download_url+"</a>/file_name_or_pat");
             }
             else {
-                var download_url = "${route_url('main',request)}token/"+data['token']+"/raw/"+file_path; 
+                var download_url = "${route_url('main',request)}token/"+data['token']+"/raw/"+file_path;
                 $("#token-share").html("You can now share this file for public download with the following url for the next 24 hours:<br/><a href=\""+download_url+"\">"+download_url+"</a>");
             }
         });
@@ -193,9 +193,9 @@ $.getJSON("${request.route_url('my.json')}"+filter,function(data) {
             }
             mylisthtml += '</td>';
             mylisthtml += '<td>'+dataset['name']+'</td>';
-            if(dataset['data']['type']!=undefined) {
-                mylisthtml += '<td>'+dataset['data']['type']+ \
-                              '/'+ dataset['data']['format']+"</td>";
+            if(dataset['data']['type']['data_terms']!=undefined) {
+                mylisthtml += '<td>'+dataset['data']['type']['data_terms']+ \
+                              '/'+ dataset['data']['type']['format_terms']+"</td>";
             }
             else { mylisthtml += '<td>N/A</td>'; }
             if(dataset['data']['path']!=undefined) {

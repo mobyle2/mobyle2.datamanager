@@ -2,6 +2,7 @@
 
 #from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
+from pyftpdlib.handlers import FTPHandler
 from mobyle.data.ftp.mobyleftphandler import MobyleFTPHandler
 
 import sys
@@ -18,6 +19,8 @@ FTP PUT and DELETE are not implemented yet, only GET
 """
 
 def main():
+
+    logging.basicConfig(level=logging.DEBUG)
 
     parser = argparse.ArgumentParser(description='Initialize ftp configuration.')
     parser.add_argument('--config')
@@ -44,7 +47,7 @@ def main():
     # anonymous user
 
     # Instantiate FTP handler class
-    handler = MobyleFTPHandler
+    handler = FTPHandler
     handler.authorizer = authorizer
     handler.abstracted_fs = MobyleFileSystem
 

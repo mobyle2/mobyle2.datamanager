@@ -39,8 +39,8 @@ function showDataSet(uid, url, mymodal, isowner) {
         if('size' in data['dataset']['data']) {
             infoHtml += '<div><strong>Size</strong>: '+bytesToSize(data['dataset']['data']['size'])+'</div>';
         }
-        if('format' in data['dataset']['data']) {
-            infoHtml += '<div><strong>Format</strong>: '+data['dataset']['data']['format']+'</div>';
+        if('format_terms' in data['dataset']['data']['type']) {
+            infoHtml += '<div><strong>Format</strong>: '+data['dataset']['data']['type']['format_terms'][0]+'</div>';
         }
         if('path' in data['dataset']['data']) {
             // This is a RefData (one or more file
@@ -48,11 +48,10 @@ function showDataSet(uid, url, mymodal, isowner) {
             infoHtml += "<div><h3>Files</h3>";
             infoHtml += "<div>Size: " + bytesToSize(value['size']) + "</div>";
             infoHtml += "<table class=\"table\">";
-            for(i=0;i<value['path'].length;i++) {
-            //$.each(data['dataset']['data']['value']['path'], function(key,value) {
+            //for(i=0;i<value['path'].length;i++) {
                 infoHtml += "<tr>";
-                var fpath = value['path'][i];
-                infoHtml += "<td>" + value['path'][i] + "</td>";
+                var fpath = value['path'];
+                infoHtml += "<td>" + value['path'] + "</td>";
                 infoHtml += "<td>";
                 infoHtml += "<button class=\"btn btn-info download\""+
                                 " data-uid=\""+uid+"\""+
@@ -68,8 +67,7 @@ function showDataSet(uid, url, mymodal, isowner) {
                 infoHtml += "</td>";
 
                 infoHtml += "</tr>";
-            //});
-            }
+            //}
             infoHtml += "</table>";
 
             infoHtml += "</div>";
@@ -93,14 +91,14 @@ function showDataSet(uid, url, mymodal, isowner) {
             available_files += "]";
             $.each(value['properties'], function(index, subvalue) {
                 infoHtml += "<tr>";
-                var fpath = subvalue['path'][0];
+                var fpath = subvalue['path'];
 
                 //infoHtml += "<td>" + subvalue['path'][0] +" ("+ bytesToSize(subvalue['size']) +")"+ "</td>";
                 dowarn = '';
-                if(subvalue['path'].length==0) {
+                if(subvalue['path']=='') {
                     dowarn = 'alert';
                 }
-                infoHtml += '<td><strong>'+index+'</strong>: <span class="canedit '+dowarn+'" data-source="'+available_files+'"  id="type" data-type="select" data-pk="'+index+'" data-title="Select the file or this type" data-url="data/'+uid+'/edit">'+subvalue["path"][0]+' ('+bytesToSize(subvalue["size"])+') ' + '</span></td>';
+                infoHtml += '<td><strong>'+index+'</strong>: <span class="canedit '+dowarn+'" data-source="'+available_files+'"  id="type" data-type="select" data-pk="'+index+'" data-title="Select the file or this type" data-url="data/'+uid+'/edit">'+subvalue['path']+' ('+bytesToSize(subvalue["size"])+') ' + '</span></td>';
 
                 infoHtml += "<td>";
                 infoHtml += "<button class=\"btn btn-info download\""+
@@ -183,15 +181,15 @@ function getFacets(datasets, projects) {
             facets['tags'][dataset['tags'][i]]++;
         }
 
-        if (facets['types'][dataset['data']['type']] == undefined) {
-            facets['types'][dataset['data']['type']] = 0;
+        if (facets['types'][dataset['data']['type']['data_terms']] == undefined) {
+            facets['types'][dataset['data']['type']['data_terms']] = 0;
         }
-        facets['types'][dataset['data']['type']]++;
+        facets['types'][dataset['data']['type']['data_terms']]++;
 
-        if (facets['formats'][dataset['data']['format']] == undefined) {
-            facets['formats'][dataset['data']['format']] = 0;
+        if (facets['formats'][dataset['data']['type']['format_terms']] == undefined) {
+            facets['formats'][dataset['data']['type']['format_terms']] = 0;
         }
-        facets['formats'][dataset['data']['format']]++;
+        facets['formats'][dataset['data']['type']['format_terms']]++;
     }
     return facets;
 }
