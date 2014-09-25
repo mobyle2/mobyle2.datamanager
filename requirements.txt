@@ -12,7 +12,6 @@ celery-with-mongodb
 pyramid_celery
 nose
 webtest
-mongokit
 pyftpdlib
 gitpython==0.3.2.RC1
 yapsy
