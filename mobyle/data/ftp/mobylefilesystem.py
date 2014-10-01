@@ -134,8 +134,6 @@ class MobyleFileSystem(AbstractedFS):
                   path =  dataset['data']['path']
                   files.append({'type' : 'files', 'elt': { '_id':
                         str(dataset['_id']), 'name' : path }})
-                logging.error("#OSALLOU")
-                logging.error(dataset['data'])
                 if 'properties' in dataset['data']:
                     for key,value in dataset['data']['properties'].iteritems():
                         path = dataset['data']['properties'][key]['path']
