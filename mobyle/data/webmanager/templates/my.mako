@@ -193,7 +193,7 @@ $.getJSON("${request.route_url('my.json')}"+filter,function(data) {
             }
             mylisthtml += '</td>';
             mylisthtml += '<td>'+dataset['name']+'</td>';
-            if(dataset['data']['type']['data_terms']!=undefined) {
+            if(dataset['data']['type'] != undefined && dataset['data']['type']['data_terms']!=undefined) {
                 mylisthtml += '<td>'+dataset['data']['type']['data_terms']+ \
                               '/'+ dataset['data']['type']['format_terms']+"</td>";
             }
