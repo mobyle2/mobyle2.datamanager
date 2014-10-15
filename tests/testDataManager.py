@@ -42,7 +42,7 @@ class DataManagerTest(unittest.TestCase):
             config = Config().config()
             dirname, filename = os.path.split(os.path.abspath(__file__))
             DataManagerTest.datadir = dirname + "/data"
-            config.set("app:main", "store", DataManagerTest.datadir)
+            config.set("app:main", "dm_store", DataManagerTest.datadir)
             ObjectManager.storage = None
             self.manager = ObjectManager()
             datasets = connection.ProjectData.find()

@@ -18,7 +18,7 @@ delay_background = false
 
 Set to true to use Celery to execute some time intensive tasks in background
 
-store = /tmp/data
+dm_store = /tmp/data
 Pairtree (dataset files) location
 
 upload_dir = /tmp/ftp
@@ -52,13 +52,11 @@ Add user id in history for file history management
 
 Move following attributes to global config instead of ini file
 
-    store = /tmp/data
-    upload_dir = /tmp/ftp
     site_uri = http://localhost:6543
-    
+
     # Manage history on datasets, needs git installed
     use_history = true
-    
+
     drop_key =
     drop_secret =
 
