@@ -61,6 +61,16 @@ def use_delay():
     return asbool(mobyle_config.get("app:main", "delay_background"))
 
 
+@view_config(route_name='mobyle_login')
+def mobyle_login(request):
+    '''
+    Forward to mobyle web server to manage authentication
+    '''
+    redirect_url = request.params.getone('redirect_url')
+    mobyle_config = Config.config()
+    mobyle_url = mobyle_config.get("app:main", "site_uri")+'/is_authenticated'
+    return HTTPFound(location=mobyle_url+'?redirect_url='+redirect_url)
+
 @view_config(route_name='data_plugin_upload')
 def data_plugin_upload(request):
     '''

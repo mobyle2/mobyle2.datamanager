@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*- 
-<!DOCTYPE html>  
+# -*- coding: utf-8 -*-
+<!DOCTYPE html>
 <html>
 <head>
 
 <%
 from pyramid.url import route_url,static_url
 %>
-	
+
   <meta charset="utf-8">
   <title>Mobyle data manager</title>
   <meta name="author" content="Mobyle team">
@@ -45,7 +45,7 @@ src="${static_url('mobyle.data.webmanager:static/javascript-templates/tmpl.min.j
     % if user and user['last_name']:
     <a href="#">Welcome ${user['first_name']} ${user['last_name']} <i id="logout" class="icon-remove-sign"></i></a>
     % else:
-    <form id="apiform" action="${route_url('login',request)}" class="form form-inline"><label for="key">API KEY </label><input name="apikey" id="apikey" value=""/><button id="login" class="btn">Login</button></form>
+		<button id="login" class="btn">Login</button>
     % endif
   </li>
 </ul>
@@ -82,6 +82,9 @@ src="${static_url('mobyle.data.webmanager:static/javascript-templates/tmpl.min.j
       $("#logout").click(function() {
           window.location="${route_url('logout',request)}";
       });
+			$("#login").click(function() {
+					window.location="${route_url('mobyle_login',request)}?redirect_url=${route_url('main',request)}";
+			});
   });
   </script>
 

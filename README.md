@@ -35,7 +35,8 @@ DropBox identifiers for plugin
 
 ## Access
 
-pserve --reload src/mobyle2.datamanager/development.ini
+pserve --reload --app-name=datamanager --server-name=datamanager
+src/mobyle2.conf/mobyle.ini
 
 Root url is http://localhost:6543/data-manager
 

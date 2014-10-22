@@ -11,6 +11,7 @@ def data_include(config):
     config.add_route('upload_data', '/data')
     config.add_route('upload_remote_data', '/remotedata')
 
+    config.add_route('mobyle_login','/mobyle_login')
     config.add_route('login', '/login')
     config.add_route('logout', '/logout')
     config.add_route('my', '/my')
@@ -97,6 +98,3 @@ def main(global_config, **settings):
     from wsgicors import CORS
     return CORS(config.make_wsgi_app(), headers="*", methods="*",
                                         maxage="180", origin="*")
-
-
-
